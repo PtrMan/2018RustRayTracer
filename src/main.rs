@@ -3267,9 +3267,16 @@ fn test_buildAndSerializeBvh() {
 	*/
 
 	{
-		scenePrimitives.push(Rc::new(Primitive::POLYGON(PrimitivePolygon{
-			vertices: [Point::new(1.0, 0.0, 5.0), Point::new(-1.0, 0.0, 5.0), Point::new(0.0, 1.0, 5.0)],
-		})));
+        // fill scene with test polygons
+
+        for i in 0..300 {
+            scenePrimitives.push(Rc::new(Primitive::POLYGON(PrimitivePolygon{
+                vertices: [Point::new(1.0 - (i as f64) * 0.01, 0.0, 5.0), Point::new(-1.0 - (i as f64) * 0.01, 0.0, 5.0), Point::new(0.0 - (i as f64) * 0.01, 1.0, 5.0)],
+            })));
+        }
+
+
+
 	}
 
 
