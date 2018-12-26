@@ -1,0 +1,13 @@
+[package]
+name = "rasterizer"
+version = "0.0.1"
+authors = ["Robert Wünsche <rt09@protonmail.com>"]
+edition = "2018"
+
+[dependencies]
+nalgebra = "0.16.12"
+time = "0.1"
+rand = "0.6.1"
+
+sdl2 = "0.31.0"
+gl = "0.10.0"
