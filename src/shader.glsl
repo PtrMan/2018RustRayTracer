@@ -473,34 +473,22 @@ MeshIntersection rayVsMesh(vec3 rayOrigin, vec3 rayDirection, int meshTriangleFi
 
 // we store the BVH in a SoA because it has to be accessible by the host
 //  * store the index of the left children node, is -1 if invalid 
-int bvhNodeChildrenLeft[3] = int[3](1, -1, -1);
+uniform int bvhNodeChildrenLeft[];
 
 //  * store the index of the right children node, is -1 if invalid 
-int bvhNodeChildrenRight[3] = int[3](2, -1, -1);
+uniform int bvhNodeChildrenRight[];
 
 //  * is the specific bvh node a leaf
-int bvhIsLeaf[3] = int[3](0, 1, 1);
+uniform int bvhIsLeaf[];
 
-vec4 bvhAabbCenter[3] = vec4[3](
-    vec4(0.0, 0.0, 0.0, 1.0),
-    vec4(2.0, 0.0, 5.0, 1.0),
-    vec4(-2.0, 0.0, 5.0, 1.0)
-);
+uniform vec4 bvhAabbCenter[];
 
-vec4 bvhAabbExtend[3] = vec4[3](
-    vec4(10.0, 10.0, 10.0, 1.0),
-    vec4(1.0, 1.0, 1.0, 1.0),
-    vec4(1.0, 1.0, 1.0, 1.0)
-);
+uniform vec4 bvhAabbExtend[];
 
 // * indices to bvh leaf nodes in global array
-int bvhLeafNodeIndices[3] = int[3](
-    -1,
-    0,
-    1
-);
+uniform int bvhLeafNodeIndices[];
 
-int bvhRootNodeIdx = 0; // root node is at index 0
+uniform int bvhRootNodeIdx; // root node is at index 0
 
 
 
@@ -514,28 +502,16 @@ int bvhRootNodeIdx = 0; // root node is at index 0
 // 1 : polygon
 // TODO< other types
 
-int bvhLeafNodeType[] = int[2](
-    0, // sphere
-    0  // sphere
-);
+uniform int bvhLeafNodeType[];
 
 // position/(radius or attribute) encoding or first vertex
-vec4 bvhLeafNodeVertex0[] = vec4[2](
-    vec4(2.0,0.0,5.0,1.0),
-    vec4(-2.0,0.0,5.0,1.0)
-);
+uniform vec4 bvhLeafNodeVertex0[];
 
 // 2nd vertex
-vec4 bvhLeafNodeVertex1[] = vec4[2](
-    vec4(0.0),
-    vec4(0.0)
-);
+uniform vec4 bvhLeafNodeVertex1[];
 
 // 2rd vertex
-vec4 bvhLeafNodeVertex2[] = vec4[2](
-    vec4(0.0),
-    vec4(0.0)
-);
+uniform vec4 bvhLeafNodeVertex2[];
 
 
 

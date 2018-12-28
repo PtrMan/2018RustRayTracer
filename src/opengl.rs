@@ -2,7 +2,24 @@
 
 extern crate sdl2;
 
-pub fn openglMain() {
+use nalgebra::{U4, Matrix, MatrixArray, Vector4, Vector3};
+
+
+pub fn openglMain(
+	bvhNodeChildrenLeft:&Vec<i32>,
+	bvhNodeChildrenRight:&Vec<i32>,
+	bvhIsLeaf:&Vec<i32>,
+	bvhAabbCenter:&Vec<Vector3<f64>>,
+	bvhAabbExtend:&Vec<Vector3<f64>>,
+	bvhLeafNodeIndices:&Vec<i32>,
+	bvhRootNodeIdx:i32,
+
+
+	bvhLeafNodeType:&Vec<i32>,
+	bvhLeafNodeVertex0:&Vec<Vector4<f64>>,
+	bvhLeafNodeVertex1:&Vec<Vector4<f64>>,
+	bvhLeafNodeVertex2:&Vec<Vector4<f64>>
+) {
     
     let mut eventPump;
     
@@ -154,24 +171,218 @@ pub fn openglMain() {
 		}
 
 
-		let vertexColorLocation;
+		let uniformLocationVertexColor;
 		unsafe {
 			let uniformName = &CString::new("ourColor").unwrap();
-			vertexColorLocation = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+			uniformLocationVertexColor = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
 		}
 
+		let uniformLocationBvhNodeChildrenLeft;
+		let uniformLocationBvhNodeChildrenRight;
+		let uniformLocationBvhIsLeaf;
+		let uniformLocationBvhAabbCenter;
+		let uniformLocationBvhAabbExtend;
+		let uniformLocationBvhLeafNodeIndices;
+		let uniformLocationBvhRootNodeIdx;
+
+		//let uniformLocationBvhLeafNodeType;
+		//let uniformLocationBvhLeafNodeVertex0;
+		//let uniformLocationBvhLeafNodeVertex1;
+		//let uniformLocationBvhLeafNodeVertex2;
+
+		unsafe {
+			let uniformName = &CString::new("bvhNodeChildrenLeft").unwrap();
+			uniformLocationBvhNodeChildrenLeft = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+		}
+
+		unsafe {
+			let uniformName = &CString::new("bvhNodeChildrenRight").unwrap();
+			uniformLocationBvhNodeChildrenRight = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+		}
+
+		unsafe {
+			let uniformName = &CString::new("bvhIsLeaf").unwrap();
+			uniformLocationBvhIsLeaf = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+		}
+
+		unsafe {
+			let uniformName = &CString::new("bvhAabbCenter").unwrap();
+			uniformLocationBvhAabbCenter = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+		}
+
+		unsafe {
+			let uniformName = &CString::new("bvhAabbExtend").unwrap();
+			uniformLocationBvhAabbExtend = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+		}
+
+		unsafe {
+			let uniformName = &CString::new("bvhLeafNodeIndices").unwrap();
+			uniformLocationBvhLeafNodeIndices = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+		}
+
+		unsafe {
+			let uniformName = &CString::new("bvhRootNodeIdx").unwrap();
+			uniformLocationBvhRootNodeIdx = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+		}
+
+
+/*
+		unsafe {
+			let uniformName = &CString::new("bvhLeafNodeType").unwrap();
+			uniformLocationBvhLeafNodeType = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+		}
+
+		unsafe {
+			let uniformName = &CString::new("bvhLeafNodeVertex0").unwrap();
+			uniformLocationBvhLeafNodeVertex0 = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+		}
+
+		unsafe {
+			let uniformName = &CString::new("bvhLeafNodeVertex1").unwrap();
+			uniformLocationBvhLeafNodeVertex1 = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+		}
+
+		unsafe {
+			let uniformName = &CString::new("bvhLeafNodeVertex2").unwrap();
+			uniformLocationBvhLeafNodeVertex2 = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+		}
+*/
+
+
+
+
+
+
+
+
+
+
+
+
 		shaderProgram.use_();
+
+
+		unsafe {
+			let uniformVector:&Vec<i32> = &bvhNodeChildrenLeft;
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
+			gl::Uniform1iv(uniformLocationBvhNodeChildrenLeft, uniformVector.len() as i32, ptr);
+		}
+
+		unsafe {
+			let uniformVector:&Vec<i32> = &bvhNodeChildrenRight;
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
+			gl::Uniform1iv(uniformLocationBvhNodeChildrenRight, uniformVector.len() as i32, ptr);
+		}
+
+		unsafe {
+			let uniformVector:&Vec<i32> = &bvhIsLeaf;
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
+			gl::Uniform1iv(uniformLocationBvhIsLeaf, uniformVector.len() as i32, ptr);
+		}
+
+		unsafe {
+			let mut uniformVector:Vec<f32> = Vec::new();
+			for i in bvhAabbCenter {
+				uniformVector.push(i.x as f32);
+				uniformVector.push(i.y as f32);
+				uniformVector.push(i.z as f32);
+				uniformVector.push(1.0f32);
+			}
+
+
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
+			gl::Uniform4fv(uniformLocationBvhAabbCenter, (uniformVector.len() as i32)/4, ptr);
+		}
+
+		unsafe {
+			let mut uniformVector:Vec<f32> = Vec::new();
+			for i in bvhAabbExtend {
+				uniformVector.push(i.x as f32);
+				uniformVector.push(i.y as f32);
+				uniformVector.push(i.z as f32);
+				uniformVector.push(1.0f32);
+			}
+
+
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
+			gl::Uniform4fv(uniformLocationBvhAabbExtend, (uniformVector.len() as i32)/4, ptr);
+		}
+
+		unsafe {
+			let uniformVector:&Vec<i32> = &bvhLeafNodeIndices;
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
+			gl::Uniform1iv(uniformLocationBvhLeafNodeIndices, uniformVector.len() as i32, ptr);
+		}
+
+		unsafe {
+			gl::Uniform1i(uniformLocationBvhLeafNodeIndices, bvhRootNodeIdx);
+		}
+
+
+
+		/*
+
+		unsafe {
+			let uniformVector:&Vec<i32> = &bvhLeafNodeType;
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
+			gl::Uniform1iv(uniformLocationBvhLeafNodeType, uniformVector.len(), ptr);
+		}
+
+		unsafe {
+			let mut uniformVector:Vec<f32> = vec::new();
+			for i in bvhLeafNodeVertex0 {
+				uniformVector.push(i.x as f32);
+				uniformVector.push(i.y as f32);
+				uniformVector.push(i.z as f32);
+				uniformVector.push(i.w as f32);
+			}
+
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
+			gl::Uniform4fv(uniformLocationBvhLeafNodeVertex0, (uniformVector.len() as i32)/4, ptr);
+		}
+
+		unsafe {
+			let mut uniformVector:Vec<f32> = vec::new();
+			for i in bvhLeafNodeVertex1 {
+				uniformVector.push(i.x as f32);
+				uniformVector.push(i.y as f32);
+				uniformVector.push(i.z as f32);
+				uniformVector.push(i.w as f32);
+			}
+
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
+			gl::Uniform4fv(uniformLocationBvhLeafNodeVertex1, (uniformVector.len() as i32)/4, ptr);
+		}
+
+		unsafe {
+			let mut uniformVector:Vec<f32> = vec::new();
+			for i in bvhLeafNodeVertex2 {
+				uniformVector.push(i.x as f32);
+				uniformVector.push(i.y as f32);
+				uniformVector.push(i.z as f32);
+				uniformVector.push(i.w as f32);
+			}
+
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
+			gl::Uniform4fv(uniformLocationBvhLeafNodeVertex2, (uniformVector.len() as i32)/4, ptr);
+		}
+
+		*/
+
+
+
+
 
 		unsafe {
 			// commented because it is the not vectorized version
 			// we keep it here as code reference!
-			//gl::Uniform4f(vertexColorLocation, 0.0f32, 1.0f32, 0.0f32, 1.0f32);
+			//gl::Uniform4f(uniformLocationVertexColor, 0.0f32, 1.0f32, 0.0f32, 1.0f32);
 
 			let uniformVector:Vec<f32> = vec![
 				0.0f32, 1.0f32, 0.0f32, 0.0f32
 			];
 			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
-			gl::Uniform4fv(vertexColorLocation, 1, ptr);
+			gl::Uniform4fv(uniformLocationVertexColor, (uniformVector.len() as i32)/4, ptr);
 		}
 
 

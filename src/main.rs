@@ -1655,7 +1655,21 @@ pub fn main() {
 
     // call into openGL-main
     // TODO< dissect this main and do it here >
-    opengl::openglMain();
+    opengl::openglMain(
+        &Vec::new(), // bvhNodeChildrenLeft
+        &Vec::new(), // bvhNodeChildrenRight
+        &Vec::new(), // bvhIsLeaf
+        &Vec::new(), // bvhAabbCenter
+        &Vec::new(), // bvhAabbExtend
+        &Vec::new(), // bvhLeafNodeIndices
+        0, // bvhRootNodeIdx
+
+
+        &Vec::new(), // bvhLeafNodeType
+        &Vec::new(), // bvhLeafNodeVertex0
+        &Vec::new(), // bvhLeafNodeVertex1
+        &Vec::new()  // bvhLeafNodeVertex2
+    );
 }
 
 #[derive(PartialEq)]
