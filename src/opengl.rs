@@ -69,7 +69,7 @@ pub fn openglMain(
 	).unwrap();
 
 	let fragShader = renderer_gl::OpenGlShader::fromFragSource(
-	    &CString::new("#version 330 core\n".to_owned() + include_str!("entry.frag")).unwrap()
+	    &CString::new("#version 430 core\n".to_owned() + include_str!("entry.frag")).unwrap()
 	).unwrap();
 
 	let shaderProgram = renderer_gl::OpenGlProgram::fromShaders(
