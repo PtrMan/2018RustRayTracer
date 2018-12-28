@@ -185,10 +185,10 @@ pub fn openglMain(
 		let uniformLocationBvhLeafNodeIndices;
 		let uniformLocationBvhRootNodeIdx;
 
-		//let uniformLocationBvhLeafNodeType;
-		//let uniformLocationBvhLeafNodeVertex0;
-		//let uniformLocationBvhLeafNodeVertex1;
-		//let uniformLocationBvhLeafNodeVertex2;
+		let uniformLocationBvhLeafNodeType;
+		let uniformLocationBvhLeafNodeVertex0;
+		let uniformLocationBvhLeafNodeVertex1;
+		let uniformLocationBvhLeafNodeVertex2;
 
 		unsafe {
 			let uniformName = &CString::new("bvhNodeChildrenLeft").unwrap();
@@ -226,7 +226,6 @@ pub fn openglMain(
 		}
 
 
-/*
 		unsafe {
 			let uniformName = &CString::new("bvhLeafNodeType").unwrap();
 			uniformLocationBvhLeafNodeType = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
@@ -246,7 +245,7 @@ pub fn openglMain(
 			let uniformName = &CString::new("bvhLeafNodeVertex2").unwrap();
 			uniformLocationBvhLeafNodeVertex2 = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
 		}
-*/
+
 
 
 
@@ -320,16 +319,14 @@ pub fn openglMain(
 
 
 
-		/*
-
 		unsafe {
 			let uniformVector:&Vec<i32> = &bvhLeafNodeType;
 			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
-			gl::Uniform1iv(uniformLocationBvhLeafNodeType, uniformVector.len(), ptr);
+			gl::Uniform1iv(uniformLocationBvhLeafNodeType, uniformVector.len() as i32, ptr);
 		}
 
 		unsafe {
-			let mut uniformVector:Vec<f32> = vec::new();
+			let mut uniformVector:Vec<f32> = Vec::new();
 			for i in bvhLeafNodeVertex0 {
 				uniformVector.push(i.x as f32);
 				uniformVector.push(i.y as f32);
@@ -342,7 +339,7 @@ pub fn openglMain(
 		}
 
 		unsafe {
-			let mut uniformVector:Vec<f32> = vec::new();
+			let mut uniformVector:Vec<f32> = Vec::new();
 			for i in bvhLeafNodeVertex1 {
 				uniformVector.push(i.x as f32);
 				uniformVector.push(i.y as f32);
@@ -355,7 +352,7 @@ pub fn openglMain(
 		}
 
 		unsafe {
-			let mut uniformVector:Vec<f32> = vec::new();
+			let mut uniformVector:Vec<f32> = Vec::new();
 			for i in bvhLeafNodeVertex2 {
 				uniformVector.push(i.x as f32);
 				uniformVector.push(i.y as f32);
@@ -367,7 +364,6 @@ pub fn openglMain(
 			gl::Uniform4fv(uniformLocationBvhLeafNodeVertex2, (uniformVector.len() as i32)/4, ptr);
 		}
 
-		*/
 
 
 

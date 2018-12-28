@@ -39,16 +39,16 @@ uniform int bvhRootNodeIdx; // root node is at index 0
 // 1 : polygon
 // TODO< other types
 
-//uniform int bvhLeafNodeType[];
+uniform int bvhLeafNodeType[];
 
 // position/(radius or attribute) encoding or first vertex
-//uniform vec4 bvhLeafNodeVertex0[];
+uniform vec4 bvhLeafNodeVertex0[];
 
 // 2nd vertex
-//uniform vec4 bvhLeafNodeVertex1[];
+uniform vec4 bvhLeafNodeVertex1[];
 
 // 2rd vertex
-//uniform vec4 bvhLeafNodeVertex2[];
+uniform vec4 bvhLeafNodeVertex2[];
 
 
 
