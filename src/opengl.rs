@@ -120,12 +120,15 @@ pub fn openglMain(
 
 	shaderProgram.use_();
 
+	let mut bvhNodesSsbo: gl::types::GLuint = 0;
+	let mut bvhLeafNodesSsbo: gl::types::GLuint = 0;
+
+
 	unsafe {
 		let mut glslBvhNodes: Vec<GlslBvhNode> = Vec::new();
 
-		let mut ssbo: gl::types::GLuint = 0;
-		gl::GenBuffers(1, &mut ssbo);
-		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, ssbo);
+		gl::GenBuffers(1, &mut bvhNodesSsbo);
+		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhNodesSsbo);
 		gl::BufferData(gl::SHADER_STORAGE_BUFFER, ((/* sizeof(shader_data) */ 4*4 + 4*4 + 4*4) * glslBvhNodes.len()) as isize, glslBvhNodes.as_ptr() as *const std::ffi::c_void, gl::DYNAMIC_COPY);
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
 	}
@@ -133,9 +136,8 @@ pub fn openglMain(
 	unsafe {
 		let mut glslBvhLeafNodes: Vec<GlslBvhLeafNode> = Vec::new();
 
-		let mut ssbo: gl::types::GLuint = 0;
-		gl::GenBuffers(1, &mut ssbo);
-		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, ssbo);
+		gl::GenBuffers(1, &mut bvhLeafNodesSsbo);
+		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhLeafNodesSsbo);
 		gl::BufferData(gl::SHADER_STORAGE_BUFFER, ((/* sizeof(shader_data) */ 4*4 + 4*4 + 4*4 + 4*4) * glslBvhLeafNodes.len()) as isize, glslBvhLeafNodes.as_ptr() as *const std::ffi::c_void, gl::DYNAMIC_COPY);
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
 	}
@@ -388,6 +390,12 @@ pub fn openglMain(
 
 		unsafe {
 			gl::Uniform1i(uniformLocationBvhRootNodeIdx, bvhRootNodeIdx);
+		}
+
+		// bind SSBO's
+		unsafe {
+			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 0, bvhNodesSsbo);
+			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, bvhLeafNodesSsbo);
 		}
 
 
