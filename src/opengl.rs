@@ -56,6 +56,8 @@ extern crate sdl2;
 
 use nalgebra::{U4, Matrix, MatrixArray, Vector4, Vector3};
 
+use super::FpsMeasure;
+
 pub fn openglMain(
 	bvhNodes: &Vec<BvhNode>,
 	bvhRootNodeIdx:i32,
@@ -154,14 +156,14 @@ pub fn openglMain(
 
 	let graphicsApiVertices: Vec<f32> = vec![
 	    // positions      // colors
-	    0.5, -0.5, 0.0,   1.0, 0.0, 0.0,   // bottom right
-	    -0.5, -0.5, 0.0,  0.0, 0.0, 0.0,   // bottom left
-	    -0.5,  0.5, 0.0,   0.0, 1.0, 0.0,    // top
+	    1.0, -1.0, 0.0,   1.0, 0.0, 0.0,   // bottom right
+	    -1.0, -1.0, 0.0,  0.0, 0.0, 0.0,   // bottom left
+	    -1.0,  1.0, 0.0,   0.0, 1.0, 0.0,    // top
 
-	    0.5, 0.5, 0.0,  1.0, 1.0, 0.0,   // bottom left
-	    0.5, -0.5, 0.0,   1.0, 0.0, 0.0,   // bottom right
+	    1.0, 1.0, 0.0,  1.0, 1.0, 0.0,   // bottom left
+	    1.0, -1.0, 0.0,   1.0, 0.0, 0.0,   // bottom right
 	    
-	    -0.5,  0.5, 0.0,   0.0, 1.0, 0.0    // top
+	    -1.0,  1.0, 0.0,   0.0, 1.0, 0.0    // top
 	];
 
 	let mut vbo: gl::types::GLuint = 0;
@@ -228,7 +230,12 @@ pub fn openglMain(
 
 
 
+	let mut fpsMeasure = FpsMeasure{
+		lastSystemTime: 0,
+    	lastSecondSystemTime: 0,
 
+    	framesInThisSecond: 0,
+    };
 
     'main: loop {
         for event in eventPump.poll_iter() {
@@ -480,6 +487,8 @@ pub fn openglMain(
 		}
 
 		window.gl_swap_window();
+
+		fpsMeasure.tick();
     }
 }
 

@@ -3297,6 +3297,51 @@ fn test_buildAndSerializeBvh() {
 }
 
 
+
+
+
+
+
+
+
+//////////////////////
+// FPS utility
+
+pub struct FpsMeasure {
+    pub lastSystemTime: u64,
+    pub lastSecondSystemTime: u64,
+
+    pub framesInThisSecond: i64,
+}
+
+impl FpsMeasure {
+    pub fn tick(&mut self) {
+
+        let timeInNs = time::precise_time_ns();
+
+        if self.lastSecondSystemTime + 1000000000 <= timeInNs {
+            println!("fps=~{}", self.framesInThisSecond);
+
+            self.lastSecondSystemTime = timeInNs;
+            self.framesInThisSecond = 0;
+        }
+        else {
+            self.framesInThisSecond+=1;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 // TODO< remove HasCenter because it is redudant >
 
 
