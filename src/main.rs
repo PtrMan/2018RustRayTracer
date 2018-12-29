@@ -1659,11 +1659,7 @@ pub fn main() {
         &Vec::new(), // bvhNodes
         0, // bvhRootNodeIdx
 
-
-        &Vec::new(), // bvhLeafNodeType
-        &Vec::new(), // bvhLeafNodeVertex0
-        &Vec::new(), // bvhLeafNodeVertex1
-        &Vec::new()  // bvhLeafNodeVertex2
+        &Vec::new() // BvhLeafNodes
     );
 }
 

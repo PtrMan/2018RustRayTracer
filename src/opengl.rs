@@ -1,5 +1,6 @@
 #![allow(non_snake_case)]
 
+// TODO< translate between normal struct and glsl struct and push it to OpenGL >
 
 
 
@@ -7,7 +8,7 @@
 
 
 #[repr(C)]
-pub struct GlslBvhNode {
+struct GlslBvhNode {
     pub nodeChildrenLeft: i32,
     pub nodeChildrenRight: i32,
     pub isLeaf: i32, // bool
@@ -30,7 +31,7 @@ pub struct BvhNode {
 
 
 #[repr(C)]
-pub struct GlslBvhLeafNode {
+struct GlslBvhLeafNode {
     pub nodeType: i32,
     pub padding0: i32,
     pub padding1: i32,
@@ -41,7 +42,13 @@ pub struct GlslBvhLeafNode {
     pub vertex2: [f32; 4],
 }
 
+pub struct BvhLeafNode {
+	pub nodeType: i32,
 
+    pub vertex0: Vector4<f64>,
+    pub vertex1: Vector4<f64>,
+    pub vertex2: Vector4<f64>,
+}
 
 
 
@@ -53,11 +60,7 @@ pub fn openglMain(
 	bvhNodes: &Vec<BvhNode>,
 	bvhRootNodeIdx:i32,
 
-
-	bvhLeafNodeType:&Vec<i32>,
-	bvhLeafNodeVertex0:&Vec<Vector4<f64>>,
-	bvhLeafNodeVertex1:&Vec<Vector4<f64>>,
-	bvhLeafNodeVertex2:&Vec<Vector4<f64>>
+	bvhLeafNodes: &Vec<BvhLeafNode>
 ) {
     
     let mut eventPump;
