@@ -28,6 +28,23 @@ pub struct BvhNode {
 }
 
 
+
+#[repr(C)]
+pub struct GlslBvhLeafNode {
+    pub nodeType: i32,
+    pub padding0: i32,
+    pub padding1: i32,
+    pub padding2: i32,
+
+    pub vertex0: [f32; 4],
+    pub vertex1: [f32; 4],
+    pub vertex2: [f32; 4],
+}
+
+
+
+
+
 extern crate sdl2;
 
 use nalgebra::{U4, Matrix, MatrixArray, Vector4, Vector3};
@@ -110,6 +127,16 @@ pub fn openglMain(
 		gl::GenBuffers(1, &mut ssbo);
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, ssbo);
 		gl::BufferData(gl::SHADER_STORAGE_BUFFER, ((/* sizeof(shader_data) */ 4*4 + 4*4 + 4*4) * glslBvhNodes.len()) as isize, glslBvhNodes.as_ptr() as *const std::ffi::c_void, gl::DYNAMIC_COPY);
+		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
+	}
+
+	unsafe {
+		let mut glslBvhLeafNodes: Vec<GlslBvhLeafNode> = Vec::new();
+
+		let mut ssbo: gl::types::GLuint = 0;
+		gl::GenBuffers(1, &mut ssbo);
+		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, ssbo);
+		gl::BufferData(gl::SHADER_STORAGE_BUFFER, ((/* sizeof(shader_data) */ 4*4 + 4*4 + 4*4 + 4*4) * glslBvhLeafNodes.len()) as isize, glslBvhLeafNodes.as_ptr() as *const std::ffi::c_void, gl::DYNAMIC_COPY);
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
 	}
 

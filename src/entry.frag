@@ -500,33 +500,39 @@ struct BvhNodeStruct {
     vec4 aabbExtend;
 };
 
+struct BvhLeaf {
+    // type of node
+    // 0 : raytraced sphere
+    // 1 : polygon
+    // TODO< other types
+    int nodeType;
+
+    int padding0;
+    int padding1;
+    int padding2;
+
+    // position/(radius or attribute) encoding or first vertex
+    vec4 vertex0;
+
+    // 2nd vertex
+    vec4 vertex1;
+
+    // 2rd vertex
+    vec4 vertex2;
+};
+
 layout (std430, binding=0) buffer bvhNode {
     BvhNodeStruct bvhNodes[];
+};
+
+// bvh leaf nodes
+layout (std430, binding=1) buffer bvhLeafNode {
+    BvhLeaf bvhLeafNodes[];
 };
 
 
 
 
-
-
-// bvh leaf nodes
-// we store leaf nodes of the bvh in a global SoA
-
-// type of node
-// 0 : raytraced sphere
-// 1 : polygon
-// TODO< other types
-
-uniform int bvhLeafNodeType[];
-
-// position/(radius or attribute) encoding or first vertex
-uniform vec4 bvhLeafNodeVertex0[];
-
-// 2nd vertex
-uniform vec4 bvhLeafNodeVertex1[];
-
-// 2rd vertex
-uniform vec4 bvhLeafNodeVertex2[];
 
 
 
@@ -585,8 +591,8 @@ struct BvhHitRecord {
 // called for processing the hit of a leaf node
 void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hitRecord) {
     { // check collision with leaf
-        if (bvhLeafNodeType[leafNodeIdx] == 0) { // sphere
-            vec4 positionAndRadius = bvhLeafNodeVertex0[leafNodeIdx];
+        if (bvhLeafNodes[leafNodeIdx].nodeType == 0) { // sphere
+            vec4 positionAndRadius = bvhLeafNodes[leafNodeIdx].vertex0;
 
             // shoot ray aganst sphere
             float thisIntersection = iSphere(ro, rd, positionAndRadius);
@@ -607,10 +613,10 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
                 }
             }
         }
-        else if (bvhLeafNodeType[leafNodeIdx] == 1) { // polygon
-            vec3 vertex0 = bvhLeafNodeVertex0[leafNodeIdx].xyz; 
-            vec3 vertex1 = bvhLeafNodeVertex1[leafNodeIdx].xyz;
-            vec3 vertex2 = bvhLeafNodeVertex2[leafNodeIdx].xyz;
+        else if (bvhLeafNodes[leafNodeIdx].nodeType == 1) { // polygon
+            vec3 vertex0 = bvhLeafNodes[leafNodeIdx].vertex0.xyz; 
+            vec3 vertex1 = bvhLeafNodes[leafNodeIdx].vertex1.xyz;
+            vec3 vertex2 = bvhLeafNodes[leafNodeIdx].vertex2.xyz;
 
             TriangleIntersection intersectionResult = iTriangle(
                 ro, rd,
