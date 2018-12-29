@@ -556,4 +556,77 @@ pub mod renderer_gl {
 	    }
 	}
 
+
+
+
+
+
+
+
+
+
+	pub struct OpenGlTexture {
+	    id: gl::types::GLuint,
+
+	    type_: gl::types::GLuint,
+	}
+
+	
+	
+	impl OpenGlTexture {
+		// /param type_ OpenGL type of the texture, for example gl::TEXTURE_RECTANGLE or gl::TEXTURE_2D
+	    pub fn make(type_: gl::types::GLuint, width: i32, height: i32) -> Result<OpenGlTexture, String> {
+	    	let mut id_: gl::types::GLuint = 0;
+	    	//let type_: gl::types::GLuint = gl::TEXTURE_RECTANGLE;//gl::TEXTURE_2D;
+	    	
+	    	unsafe {
+	    		gl::GenTextures(1, &mut id_);
+	    	}
+
+	    	unsafe {
+				// "Bind" the newly created texture : all future texture functions will modify this texture
+				gl::BindTexture(type_, id_);
+
+				// Give the image format to OpenGL
+				gl::TexImage2D(
+					type_, // target
+					0, // type
+
+					// or R32F
+					gl::RGBA32F as i32, // internalformat
+					width as gl::types::GLint,
+					height as gl::types::GLint,
+					0,
+					gl::RGBA,
+					gl::UNSIGNED_BYTE,
+					0 as *const std::ffi::c_void
+				);
+
+				gl::TexParameteri(type_, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
+				gl::TexParameteri(type_, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+			}
+
+	        Ok(OpenGlTexture{id: id_, type_: type_})
+	    }
+
+	    pub fn bind(&self) {
+    		unsafe {
+        		gl::BindTexture(self.type_, self.id);
+    		}
+		}
+
+	    pub fn retId(&self) -> gl::types::GLuint {
+	        self.id
+	    }
+	}
+
+	impl Drop for OpenGlTexture {
+	    fn drop(&mut self) {
+	        unsafe {
+	            gl::DeleteTextures(1, &self.id);
+	        }
+	    }
+	}
+	
+
 }
