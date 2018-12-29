@@ -1656,12 +1656,7 @@ pub fn main() {
     // call into openGL-main
     // TODO< dissect this main and do it here >
     opengl::openglMain(
-        &Vec::new(), // bvhNodeChildrenLeft
-        &Vec::new(), // bvhNodeChildrenRight
-        &Vec::new(), // bvhIsLeaf
-        &Vec::new(), // bvhAabbCenter
-        &Vec::new(), // bvhAabbExtend
-        &Vec::new(), // bvhLeafNodeIndices
+        &Vec::new(), // bvhNodes
         0, // bvhRootNodeIdx
 
 

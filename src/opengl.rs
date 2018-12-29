@@ -1,17 +1,39 @@
 #![allow(non_snake_case)]
 
+
+
+
+
+
+
+#[repr(C)]
+pub struct GlslBvhNode {
+    pub nodeChildrenLeft: i32,
+    pub nodeChildrenRight: i32,
+    pub isLeaf: i32, // bool
+    pub leafNodeIdx: i32,
+
+    pub aabbCenter: [f32; 4],
+    pub aabbExtend: [f32; 4],
+}
+
+pub struct BvhNode {
+	pub nodeChildrenLeft: i32,
+    pub nodeChildrenRight: i32,
+    pub isLeaf: bool,
+    pub leafNodeIdx: i32,
+
+    pub aabbCenter: Vector3<f64>,
+    pub aabbExtend: Vector3<f64>,
+}
+
+
 extern crate sdl2;
 
 use nalgebra::{U4, Matrix, MatrixArray, Vector4, Vector3};
 
-
 pub fn openglMain(
-	bvhNodeChildrenLeft:&Vec<i32>,
-	bvhNodeChildrenRight:&Vec<i32>,
-	bvhIsLeaf:&Vec<i32>,
-	bvhAabbCenter:&Vec<Vector3<f64>>,
-	bvhAabbExtend:&Vec<Vector3<f64>>,
-	bvhLeafNodeIndices:&Vec<i32>,
+	bvhNodes: &Vec<BvhNode>,
 	bvhRootNodeIdx:i32,
 
 
@@ -77,6 +99,21 @@ pub fn openglMain(
 	).unwrap();
 
 	
+
+
+	shaderProgram.use_();
+
+	unsafe {
+		let mut glslBvhNodes: Vec<GlslBvhNode> = Vec::new();
+
+		let mut ssbo: gl::types::GLuint = 0;
+		gl::GenBuffers(1, &mut ssbo);
+		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, ssbo);
+		gl::BufferData(gl::SHADER_STORAGE_BUFFER, ((/* sizeof(shader_data) */ 4*4 + 4*4 + 4*4) * glslBvhNodes.len()) as isize, glslBvhNodes.as_ptr() as *const std::ffi::c_void, gl::DYNAMIC_COPY);
+		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
+	}
+
+
 
 
 
@@ -157,6 +194,8 @@ pub fn openglMain(
 
 
 
+
+
     'main: loop {
         for event in eventPump.poll_iter() {
             match event {
@@ -177,12 +216,12 @@ pub fn openglMain(
 			uniformLocationVertexColor = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
 		}
 
-		let uniformLocationBvhNodeChildrenLeft;
-		let uniformLocationBvhNodeChildrenRight;
-		let uniformLocationBvhIsLeaf;
-		let uniformLocationBvhAabbCenter;
-		let uniformLocationBvhAabbExtend;
-		let uniformLocationBvhLeafNodeIndices;
+		//let uniformLocationBvhNodeChildrenLeft;
+		//let uniformLocationBvhNodeChildrenRight;
+		//let uniformLocationBvhIsLeaf;
+		//let uniformLocationBvhAabbCenter;
+		//let uniformLocationBvhAabbExtend;
+		//let uniformLocationBvhLeafNodeIndices;
 		let uniformLocationBvhRootNodeIdx;
 
 		let uniformLocationBvhLeafNodeType;
@@ -190,6 +229,7 @@ pub fn openglMain(
 		let uniformLocationBvhLeafNodeVertex1;
 		let uniformLocationBvhLeafNodeVertex2;
 
+		/*
 		unsafe {
 			let uniformName = &CString::new("bvhNodeChildrenLeft").unwrap();
 			uniformLocationBvhNodeChildrenLeft = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
@@ -219,11 +259,16 @@ pub fn openglMain(
 			let uniformName = &CString::new("bvhLeafNodeIndices").unwrap();
 			uniformLocationBvhLeafNodeIndices = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
 		}
+		*/
 
 		unsafe {
 			let uniformName = &CString::new("bvhRootNodeIdx").unwrap();
 			uniformLocationBvhRootNodeIdx = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
 		}
+
+
+
+
 
 
 		unsafe {
@@ -260,7 +305,7 @@ pub fn openglMain(
 
 		shaderProgram.use_();
 
-
+		/*
 		unsafe {
 			let uniformVector:&Vec<i32> = &bvhNodeChildrenLeft;
 			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
@@ -312,9 +357,10 @@ pub fn openglMain(
 			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
 			gl::Uniform1iv(uniformLocationBvhLeafNodeIndices, uniformVector.len() as i32, ptr);
 		}
+		*/
 
 		unsafe {
-			gl::Uniform1i(uniformLocationBvhLeafNodeIndices, bvhRootNodeIdx);
+			gl::Uniform1i(uniformLocationBvhRootNodeIdx, bvhRootNodeIdx);
 		}
 
 

@@ -473,22 +473,37 @@ MeshIntersection rayVsMesh(vec3 rayOrigin, vec3 rayDirection, int meshTriangleFi
 
 // we store the BVH in a SoA because it has to be accessible by the host
 //  * store the index of the left children node, is -1 if invalid 
-uniform int bvhNodeChildrenLeft[];
+//uniform int bvhNodeChildrenLeft[];
 
 //  * store the index of the right children node, is -1 if invalid 
-uniform int bvhNodeChildrenRight[];
+//uniform int bvhNodeChildrenRight[];
 
 //  * is the specific bvh node a leaf
-uniform int bvhIsLeaf[];
+//uniform int bvhIsLeaf[];
 
-uniform vec4 bvhAabbCenter[];
+//uniform vec4 bvhAabbCenter[];
 
-uniform vec4 bvhAabbExtend[];
+//uniform vec4 bvhAabbExtend[];
 
 // * indices to bvh leaf nodes in global array
-uniform int bvhLeafNodeIndices[];
+//uniform int bvhLeafNodeIndices[];
 
 uniform int bvhRootNodeIdx; // root node is at index 0
+
+struct BvhNodeStruct {
+    int nodeChildrenLeft;
+    int nodeChildrenRight;
+    int isLeaf; // bool
+    int leafNodeIdx;
+
+    vec4 aabbCenter;
+    vec4 aabbExtend;
+};
+
+layout (std430, binding=0) buffer bvhNode {
+    BvhNodeStruct bvhNodes[];
+};
+
 
 
 
@@ -530,20 +545,22 @@ struct BvhNodeInfo2 {
     int leafNodeIdx; // index to leaf node element in global array
 };
 
-/*
 
 
 // utility helper to read a BVH node from SoA to a structure
 BvhNodeInfo2 retBvhNodeAt(int idx) {
     BvhNodeInfo2 res;
-    res.childrenLeft = bvhNodeChildrenLeft[idx];
-    res.childrenRight = bvhNodeChildrenRight[idx];
-    res.isLeaf = bvhIsLeaf[idx] != 0;
-    res.aabbCenter = bvhAabbCenter[idx].xyz;
-    res.aabbExtend = bvhAabbExtend[idx].xyz;
-    res.leafNodeIdx = bvhLeafNodeIndices[idx];
+    res.childrenLeft = bvhNodes[idx].nodeChildrenLeft;
+    res.childrenRight = bvhNodes[idx].nodeChildrenRight;
+    res.isLeaf = bvhNodes[idx].isLeaf != 0;
+    res.aabbCenter = bvhNodes[idx].aabbCenter.xyz;
+    res.aabbExtend = bvhNodes[idx].aabbExtend.xyz;
+    res.leafNodeIdx = bvhNodes[idx].leafNodeIdx;
     return res;
 }
+
+
+/*
 
 
 
