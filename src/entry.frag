@@ -1054,6 +1054,11 @@ out vec4 Color;
 uniform vec4 ourColor;
 
 void main() {
-    Color = vec4(IN.Color, 1.0f);
+    vec4 color2; // will contain color
+    vec2 uv = IN.Color.xy; // screen space UV
+    float screenRatio = 1.0;
+    mainImage2(color2, uv, screenRatio);
+
+    Color = vec4(color2.xyz, 1.0f);
     //Color = ourColor;
 }

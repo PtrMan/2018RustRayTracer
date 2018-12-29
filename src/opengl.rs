@@ -120,6 +120,8 @@ pub fn openglMain(
 
 	shaderProgram.use_();
 
+
+	// TODO< make ssbo attribute of shaderprogram and add a drop trait for it >
 	let mut bvhNodesSsbo: gl::types::GLuint = 0;
 	let mut bvhLeafNodesSsbo: gl::types::GLuint = 0;
 
@@ -253,10 +255,10 @@ pub fn openglMain(
 		//let uniformLocationBvhLeafNodeIndices;
 		let uniformLocationBvhRootNodeIdx;
 
-		let uniformLocationBvhLeafNodeType;
-		let uniformLocationBvhLeafNodeVertex0;
-		let uniformLocationBvhLeafNodeVertex1;
-		let uniformLocationBvhLeafNodeVertex2;
+		//let uniformLocationBvhLeafNodeType;
+		//let uniformLocationBvhLeafNodeVertex0;
+		//let uniformLocationBvhLeafNodeVertex1;
+		//let uniformLocationBvhLeafNodeVertex2;
 
 		/*
 		unsafe {
@@ -299,7 +301,7 @@ pub fn openglMain(
 
 
 
-
+		/*
 		unsafe {
 			let uniformName = &CString::new("bvhLeafNodeType").unwrap();
 			uniformLocationBvhLeafNodeType = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
@@ -319,7 +321,7 @@ pub fn openglMain(
 			let uniformName = &CString::new("bvhLeafNodeVertex2").unwrap();
 			uniformLocationBvhLeafNodeVertex2 = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
 		}
-
+*/
 
 
 
@@ -399,7 +401,7 @@ pub fn openglMain(
 		}
 
 
-
+		/*
 		unsafe {
 			let uniformVector:&Vec<i32> = &bvhLeafNodeType;
 			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
@@ -444,6 +446,7 @@ pub fn openglMain(
 			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
 			gl::Uniform4fv(uniformLocationBvhLeafNodeVertex2, (uniformVector.len() as i32)/4, ptr);
 		}
+		*/
 
 
 
