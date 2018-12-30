@@ -1713,19 +1713,23 @@ pub fn main() {
             vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
         });
         
+        for i in 0..10 {
+            let phase = t * 0.3 + (i as f64) * 0.7;
 
-        let mut positionDelta = Vec3::new((t * 0.2).cos(), 0.0, (t * 0.2).sin());
-        positionDelta = positionDelta.scale(3.0);
-        let mut position = &Vec3::new(0.0, 0.0, 7.0) + &positionDelta;
+            let mut positionDelta = Vec3::new(phase.cos(), 0.0, phase.sin());
+            positionDelta = positionDelta.scale(3.0);
+            let mut position = &Vec3::new(0.0, 0.0, 7.0) + &positionDelta;
 
-        bvhLeafNodes.push(opengl::BvhLeafNode {
-            nodeType: 0, // 0 is sphere
-            materialIdx: 1,
+            bvhLeafNodes.push(opengl::BvhLeafNode {
+                nodeType: 0, // 0 is sphere
+                materialIdx: 1,
 
-            vertex0: Vector4::<f64>::new(position.x, position.y, position.z, 0.7), // position and radius
-            vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
-            vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
-        }); 
+                vertex0: Vector4::<f64>::new(position.x, position.y, position.z, 0.7), // position and radius
+                vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
+                vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
+            });
+        }
+ 
 
         let mut bvhRootNodeIdx = 0;
 
