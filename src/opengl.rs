@@ -132,17 +132,25 @@ pub fn openglMain(
 
 
 	unsafe {
+		use std::mem;
+
+		let maxNumberOfElements = 1 << 12;
+
 		gl::GenBuffers(1, &mut bvhNodesSsbo);
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhNodesSsbo);
-		gl::BufferData(gl::SHADER_STORAGE_BUFFER, (4*(4+4+4)), 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
+		gl::BufferData(gl::SHADER_STORAGE_BUFFER, (mem::size_of::<GlslBvhNode>() * maxNumberOfElements) as isize, 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
 		gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 0, bvhNodesSsbo); // because it is at location 0
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
 	}
 
 	unsafe {
+		use std::mem;
+
+		let maxNumberOfElements = 1 << 12;
+
 		gl::GenBuffers(1, &mut bvhLeafNodesSsbo);
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhLeafNodesSsbo);
-		gl::BufferData(gl::SHADER_STORAGE_BUFFER, (4*(4 + 3*4)), 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
+		gl::BufferData(gl::SHADER_STORAGE_BUFFER, (mem::size_of::<GlslBvhLeafNode>() * maxNumberOfElements) as isize, 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
 		gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, bvhLeafNodesSsbo); // because it is at location 1
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
 	}
