@@ -490,6 +490,12 @@ MeshIntersection rayVsMesh(vec3 rayOrigin, vec3 rayDirection, int meshTriangleFi
 
 uniform int bvhRootNodeIdx; // root node is at index 0
 
+// number of BVH leaf nodes
+// mainly used for rendering just the BVH leafes without walking the tree
+// we do this because walking the BVH might be more expensive for small scenes
+uniform int bvhLeafNodesCount;
+
+
 struct BvhNodeStruct {
     int nodeChildrenLeft;
     int nodeChildrenRight;
@@ -874,7 +880,7 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
         }
     }
 #endif
-    
+
     
 #ifdef RENDER_VOLUME0
     vec4 sphere0PositionAndRadius = vec4(pos0,radius0);
