@@ -456,7 +456,7 @@ pub fn openglMain(
 			gl::BufferSubData(
 				gl::SHADER_STORAGE_BUFFER,
 				0,
-				((/* sizeof(shader_data) */ 4*4 + 4*4 + 4*4 + 4*4) * glslBvhLeafNodes.len()) as isize,
+				(std::mem::size_of::<GlslBvhLeafNode>() * glslBvhLeafNodes.len()) as isize,
 				glslBvhLeafNodes.as_mut_ptr() as *const std::ffi::c_void
 			);
 			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
