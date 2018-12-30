@@ -856,7 +856,8 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
     vec3 dir = normalize(vec3(uv11,1.0));
     vec3 cameraPos = vec3(0.0,0.0,0.0);
     
-    
+
+#if 0
     
     for(int instanceI=0;instanceI<10;instanceI++) {
     	
@@ -872,6 +873,7 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
             col = vec3(1.0, light, light); // indicate with the color that we had hit the mesh
         }
     }
+#endif
     
     
 #ifdef RENDER_VOLUME0
@@ -898,6 +900,7 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
     
     
     // sphere tracing of primary ray for test shape
+#if 0
     {
     	float iTime = 0.0; // HACK
 
@@ -984,7 +987,8 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
             
         }
     }
-    
+#endif
+
 
 #ifdef RENDERTEST_AABB0
     {
