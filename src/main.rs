@@ -1685,6 +1685,17 @@ pub fn main() {
 
         // add BVH leaf for testing
         bvhLeafNodes.push(opengl::BvhLeafNode {
+            nodeType: 2, // 2 is capped cone
+            materialIdx: 0,
+
+            vertex0: Vector4::<f64>::new(0.0, 0.0, 7.0, 1.5), // position and radius
+            vertex1: Vector4::<f64>::new(0.01, 3.01, 7.01, 1.503), // position and radius - must be uneven because of precision issues on GPU
+            vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
+        });
+
+
+        
+        bvhLeafNodes.push(opengl::BvhLeafNode {
             nodeType: 0, // 0 is sphere
             materialIdx: 0,
 
@@ -1701,7 +1712,7 @@ pub fn main() {
             vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
             vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
         });
-
+        
 
         let mut positionDelta = Vec3::new((t * 0.2).cos(), 0.0, (t * 0.2).sin());
         positionDelta = positionDelta.scale(3.0);

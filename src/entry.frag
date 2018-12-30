@@ -606,63 +606,98 @@ struct BvhHitRecord {
     
 // called for processing the hit of a leaf node
 void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hitRecord) {
-    { // check collision with leaf
-        if (bvhLeafNodes[leafNodeIdx].nodeType == 0) { // sphere
-            vec4 positionAndRadius = bvhLeafNodes[leafNodeIdx].vertex0;
+    vec4 vertex0_4 = bvhLeafNodes[leafNodeIdx].vertex0; 
+    vec4 vertex1_4 = bvhLeafNodes[leafNodeIdx].vertex1;
+    vec4 vertex2_4 = bvhLeafNodes[leafNodeIdx].vertex2;
 
-            // shoot ray aganst sphere
-            float thisIntersection = iSphere(ro, rd, positionAndRadius);
-            if (thisIntersection >= 0.0) { // has hit
-                if (!hitRecord.hit) { // is first hit
-                    hitRecord.t = thisIntersection;
-                    hitRecord.hit = true;
-                    hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
-                    
-                    vec3 p = ro + rd*thisIntersection;
-                    hitRecord.n = (p - positionAndRadius.xyz) * (1.0 / positionAndRadius.w);
-                }
-                else if (thisIntersection < hitRecord.t) {
-                    hitRecord.t = thisIntersection;
-                    hitRecord.hit = true;
-                    hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
-                    
-                    vec3 p = ro + rd*thisIntersection;
-                    hitRecord.n = (p - positionAndRadius.xyz) * (1.0 / positionAndRadius.w);
-                }
+    if (bvhLeafNodes[leafNodeIdx].nodeType == 0) { // sphere
+        vec4 positionAndRadius = vertex0_4;
+
+        // shoot ray aganst sphere
+        float thisIntersection = iSphere(ro, rd, positionAndRadius);
+        if (thisIntersection >= 0.0) { // has hit
+            if (!hitRecord.hit) { // is first hit
+                hitRecord.t = thisIntersection;
+                hitRecord.hit = true;
+                hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
+                
+                vec3 p = ro + rd*thisIntersection;
+                hitRecord.n = (p - positionAndRadius.xyz) * (1.0 / positionAndRadius.w);
+            }
+            else if (thisIntersection < hitRecord.t) {
+                hitRecord.t = thisIntersection;
+                hitRecord.hit = true;
+                hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
+                
+                vec3 p = ro + rd*thisIntersection;
+                hitRecord.n = (p - positionAndRadius.xyz) * (1.0 / positionAndRadius.w);
             }
         }
-        else if (bvhLeafNodes[leafNodeIdx].nodeType == 1) { // polygon
-            vec3 vertex0 = bvhLeafNodes[leafNodeIdx].vertex0.xyz; 
-            vec3 vertex1 = bvhLeafNodes[leafNodeIdx].vertex1.xyz;
-            vec3 vertex2 = bvhLeafNodes[leafNodeIdx].vertex2.xyz;
+    }
+    else if (bvhLeafNodes[leafNodeIdx].nodeType == 1) { // polygon
+        vec3 vertex0 = vertex0_4.xyz; 
+        vec3 vertex1 = vertex1_4.xyz;
+        vec3 vertex2 = vertex2_4.xyz;
 
-            TriangleIntersection intersectionResult = iTriangle(
-                ro, rd,
-                vertex0,
-                vertex1,
-                vertex2
-            );
-            float thisIntersection = intersectionResult.t;
+        TriangleIntersection intersectionResult = iTriangle(
+            ro, rd,
+            vertex0,
+            vertex1,
+            vertex2
+        );
+        float thisIntersection = intersectionResult.t;
 
-            if (thisIntersection > 0.0) {
-                if (!hitRecord.hit) { // is first hit
-                    hitRecord.t = thisIntersection;
-                    hitRecord.hit = true;
-                    hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
-                    
-                    vec3 p = ro + rd*thisIntersection;
-                    hitRecord.n = normalize(intersectionResult.n);
-                }
-                else if (thisIntersection < hitRecord.t) {
-                    hitRecord.t = thisIntersection;
-                    hitRecord.hit = true;
-                    hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
-                    
-                    vec3 p = ro + rd*thisIntersection;
-                    hitRecord.n = normalize(intersectionResult.n);
-                }
+        if (thisIntersection > 0.0) {
+            if (!hitRecord.hit) { // is first hit
+                hitRecord.t = thisIntersection;
+                hitRecord.hit = true;
+                hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
+                
+                vec3 p = ro + rd*thisIntersection;
+                hitRecord.n = normalize(intersectionResult.n);
+            }
+            else if (thisIntersection < hitRecord.t) {
+                hitRecord.t = thisIntersection;
+                hitRecord.hit = true;
+                hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
+                
+                vec3 p = ro + rd*thisIntersection;
+                hitRecord.n = normalize(intersectionResult.n);
             }
         }
+    }
+    else if (bvhLeafNodes[leafNodeIdx].nodeType == 2) { // capped cone
+        
+        vec4 resultTAndNormal = iCappedCone(
+            ro, rd, 
+            vertex0_4.xyz, vertex1_4.xyz, 
+            vertex0_4.w, vertex1_4.w
+        );
+
+        float thisIntersection = resultTAndNormal.x;
+
+        if (thisIntersection > 0.0) {
+            if (!hitRecord.hit) { // is first hit
+                hitRecord.t = thisIntersection;
+                hitRecord.hit = true;
+                hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
+                
+                vec3 p = ro + rd*thisIntersection;
+                hitRecord.n = normalize(resultTAndNormal.yzw); // not necessary - already normalized
+            }
+            else if (thisIntersection < hitRecord.t) {
+                hitRecord.t = thisIntersection;
+                hitRecord.hit = true;
+                hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
+                
+                vec3 p = ro + rd*thisIntersection;
+                hitRecord.n = normalize(resultTAndNormal.yzw); // not necessary - already normalized
+            }
+        }
+
+
+
+
     }
 }
 
@@ -1081,6 +1116,7 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
         }
     }
 #endif
+
 
 
 
