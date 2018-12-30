@@ -10,6 +10,7 @@
 
 // TODO< textures for storing of BVH information - textures should be faster than SSBO's >
 
+float pow5(float v) {return (v * v) * (v * v) * v;}
 
 
 float dot2( in vec3 v ) { return dot(v,v); }
@@ -807,6 +808,15 @@ BvhHitRecord bvhTraverse(in vec3 ro, in vec3 rd) {
 //////////////////////////////////////
 // shading
 
+// /param Rs reflectance without fresnel factor - 0.0 means full fresnel
+float shading_schlickFresnel(float rs, float cosTheta) {
+    // approximation of fresnel formula
+    // ref www.pbr-book.org/3ed-2018/Reflection_Models/Fresnel_Incidence_Effects.html
+
+    return rs + pow5(1.0 - cosTheta) * (1.0 - rs);
+}
+
+
 struct Material {
     // 0 : lambertian
     int type;
@@ -1112,7 +1122,11 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
             }
 
 
-            col = shadingColor * 0.7 + reflectedColor * 0.3;
+            float rs = 0.1;
+            float cosTheta = dot(hitRecord0.n, -dir);
+            float fresnelReflectance = shading_schlickFresnel(rs, cosTheta);
+
+            col = shadingColor * (1.0 - fresnelReflectance) + reflectedColor * fresnelReflectance;
         }
     }
 #endif
