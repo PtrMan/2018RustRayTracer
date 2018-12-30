@@ -2,9 +2,7 @@
 
 
 
-// TODO< rendering of multiple BVH leaves without walking the BVH >
-
-
+// TODO< pass materials to shader >
 
 
 
@@ -761,6 +759,42 @@ BvhHitRecord bvhTraverse(in vec3 ro, in vec3 rd) {
 
 
 
+//////////////////////////////////////
+// shading
+
+struct Material {
+    // 0 : lambertian
+    int type;
+
+    int padding0;
+    int padding1;
+    int padding2;
+
+    vec4 baseColor;
+};
+
+// shading function - computes the shading of a material lit by a light
+vec3 shadeSurface(vec3 lightDir, vec3 n, float lightIntensity, Material material) {
+    if (material.type == 0) { // lambertian
+        // diffuse shading of implicit surface
+        float diffuse = dot(lightDir, n);
+        diffuse = max(0.0, diffuse);
+        
+        return material.baseColor * (diffuse * lightIntensity);
+    }
+
+    return vec3(0.0);
+}
+            
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1065,7 +1099,25 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
         bvhCheckAgainstLeafs(rayOrigin, dir, /*inout*/hitRecord);
 
         if (hitRecord.hit) {
-            col = vec3(0.0, 1.0, 1.0); // debug a hit with blue
+            // compute primitive shading
+
+            vec3 lightDir = vec3(0.0, 0.0, -1.0); // direction to light (normalized)
+            
+            // TODO< falloff with distance >
+            float lightIntensity = 1.0; // intensity of light
+
+
+            Material testMaterial; // material for testing
+            testMaterial.type = 0; // lambertian
+            testMaterial.baseColor = vec4(1.0, 1.0, 1.0, 1.0);
+
+            vec3 shadingColor = vec3(0.0); // resulting color
+
+            shadingColor += shadeSurface(lightDir, hitRecord.n, lightIntensity, testMaterial) ;
+
+
+
+            col = shadingColor;
         }
     }
 #endif
