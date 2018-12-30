@@ -1,7 +1,14 @@
 // License: MIT
 
 
-// TODO< textures for BVH information >
+
+// TODO< rendering of multiple BVH leaves without walking the BVH >
+
+
+
+
+
+// TODO< textures for storing of BVH information - textures should be faster than SSBO's >
 
 
 
@@ -651,6 +658,20 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
     }
 }
 
+
+// checks all leaf nodes without walking the BVH tree
+void bvhCheckAgainstLeafs(vec3 ro, vec3 rd, inout BvhHitRecord hitRecord) {
+    // init
+    hitRecord.hit = false;
+    hitRecord.t = -1.0;
+    hitRecord.bvhHits = 0;
+
+    int iLeafNodeIdx;
+    for (iLeafNodeIdx=0; iLeafNodeIdx<bvhLeafNodesCount; iLeafNodeIdx++) {
+        bvhProcessLeafHit(ro, rd, iLeafNodeIdx,/*inout*/ hitRecord);
+    }
+}
+
 /*
 
 
@@ -1034,12 +1055,14 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
         vec3 rayOrigin = cameraPos;
 
         BvhHitRecord hitRecord; // used to store the hit
-        hitRecord.hit = false;
-        hitRecord.t = -1.0;
-        hitRecord.bvhHits = 0;
+        //hitRecord.hit = false;
+        //hitRecord.t = -1.0;
+        //hitRecord.bvhHits = 0;
 
-        int leafNodeIdx = 0; // we just want to shoot the ray against BVH leaf node 0
-        bvhProcessLeafHit(rayOrigin, dir, leafNodeIdx, /*inout*/hitRecord);
+        //int leafNodeIdx = 0; // we just want to shoot the ray against BVH leaf node 0
+        //bvhProcessLeafHit(rayOrigin, dir, leafNodeIdx, /*inout*/hitRecord);
+
+        bvhCheckAgainstLeafs(rayOrigin, dir, /*inout*/hitRecord);
 
         if (hitRecord.hit) {
             col = vec3(0.0, 1.0, 1.0); // debug a hit with blue

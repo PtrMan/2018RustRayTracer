@@ -1675,7 +1675,7 @@ pub fn main() {
         }
 
 
-            
+
         let mut bvhNodes: Vec<opengl::BvhNode> = Vec::new();
 
         let mut bvhLeafNodes: Vec<opengl::BvhLeafNode> = Vec::new();
@@ -1685,6 +1685,14 @@ pub fn main() {
             nodeType: 0, // 0 is sphere
 
             vertex0: Vector4::<f64>::new(0.0, 0.0, 10.0, 1.0), // position and radius
+            vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
+            vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
+        }); 
+
+        bvhLeafNodes.push(opengl::BvhLeafNode {
+            nodeType: 0, // 0 is sphere
+
+            vertex0: Vector4::<f64>::new(4.0, 0.0, 10.0, 1.0), // position and radius
             vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
             vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
         }); 
