@@ -31,9 +31,9 @@ pub struct BvhNode {
 #[repr(C)]
 struct GlslBvhLeafNode {
     pub nodeType: i32,
+    pub materialIdx: i32,
     pub padding0: i32,
     pub padding1: i32,
-    pub padding2: i32,
 
     pub vertex0: [f32; 4],
     pub vertex1: [f32; 4],
@@ -42,6 +42,7 @@ struct GlslBvhLeafNode {
 
 pub struct BvhLeafNode {
 	pub nodeType: i32,
+	pub materialIdx: i32,
 
     pub vertex0: Vector4<f64>,
     pub vertex1: Vector4<f64>,
@@ -58,6 +59,11 @@ struct GlslMaterial {
     pub padding2: i32,
 
     pub baseColor: [f32; 4],
+}
+
+pub struct Material {
+	pub type_: i32,
+	pub baseColor: Vector3<f32>,
 }
 
 
@@ -324,7 +330,9 @@ impl GraphicsEngine {
 		bvhNodes: &Vec<BvhNode>,
 		bvhRootNodeIdx:i32,
 
-		bvhLeafNodes: &Vec<BvhLeafNode>
+		bvhLeafNodes: &Vec<BvhLeafNode>,
+
+		materials: &Vec<Material>
 	) {
 
         use std::ffi::CString;
@@ -408,9 +416,9 @@ impl GraphicsEngine {
 			for iBvhLeafNode in bvhLeafNodes {
 				glslBvhLeafNodes.push(GlslBvhLeafNode{
 					nodeType: iBvhLeafNode.nodeType,
+					materialIdx: iBvhLeafNode.materialIdx,
 	    			padding0: 0,
 					padding1: 0,
-					padding2: 0,
 
 					vertex0: [iBvhLeafNode.vertex0.x as f32, iBvhLeafNode.vertex0.y as f32, iBvhLeafNode.vertex0.z as f32, iBvhLeafNode.vertex0.w as f32],
 					vertex1: [iBvhLeafNode.vertex1.x as f32, iBvhLeafNode.vertex1.y as f32, iBvhLeafNode.vertex1.z as f32, iBvhLeafNode.vertex1.w as f32],
@@ -446,7 +454,16 @@ impl GraphicsEngine {
 			let mut glslMaterials: Vec<GlslMaterial> = Vec::new();
 
 			// translate data to GLSL format
-			// TODO
+			for iMaterial in materials {
+				glslMaterials.push(GlslMaterial{
+					type_: iMaterial.type_,
+					padding0: 0,
+					padding1: 0,
+					padding2: 0,
+
+					baseColor: [iMaterial.baseColor.x as f32, iMaterial.baseColor.y as f32, iMaterial.baseColor.z as f32, 1.0],
+				});
+			}
 
 			// copy the data to the SSBO
 			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, self.materialsSsbo.unwrap());

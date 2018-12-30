@@ -1680,9 +1680,12 @@ pub fn main() {
 
         let mut bvhLeafNodes: Vec<opengl::BvhLeafNode> = Vec::new();
 
+        let mut materials: Vec<opengl::Material> = Vec::new();
+
         // add BVH leaf for testing
         bvhLeafNodes.push(opengl::BvhLeafNode {
             nodeType: 0, // 0 is sphere
+            materialIdx: 0,
 
             vertex0: Vector4::<f64>::new(0.0, 0.0, 10.0, 1.0), // position and radius
             vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
@@ -1691,6 +1694,7 @@ pub fn main() {
 
         bvhLeafNodes.push(opengl::BvhLeafNode {
             nodeType: 0, // 0 is sphere
+            materialIdx: 1,
 
             vertex0: Vector4::<f64>::new(4.0, 0.0, 10.0, 1.0), // position and radius
             vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
@@ -1699,7 +1703,20 @@ pub fn main() {
 
         let mut bvhRootNodeIdx = 0;
 
-        graphicsEngine.frame(&bvhNodes, bvhRootNodeIdx, &bvhLeafNodes);
+
+        // add material(s)
+
+        materials.push(opengl::Material{
+            type_: 0, // lambertian
+            baseColor: Vector3::<f32>::new(1.0, 0.01, 0.01),
+        });
+
+        materials.push(opengl::Material{
+            type_: 0, // lambertian
+            baseColor: Vector3::<f32>::new(0.1, 0.1, 0.1),
+        });
+
+        graphicsEngine.frame(&bvhNodes, bvhRootNodeIdx, &bvhLeafNodes, &materials);
     }
 }
 

@@ -2,7 +2,11 @@
 
 
 
-// TODO< pass materials to shader >
+// TODO< translate material in RUST >
+// TODO< 
+
+
+// TODO< add capped cone as primitive >
 
 
 
@@ -518,9 +522,11 @@ struct BvhLeaf {
     // TODO< other types
     int nodeType;
 
+    // index into the material which is used by this BVH leaf node
+    int materialIdx;
+
     int padding0;
     int padding1;
-    int padding2;
 
     // position/(radius or attribute) encoding or first vertex
     vec4 vertex0;
@@ -594,6 +600,8 @@ struct BvhHitRecord {
     vec3 n; // hit normal
     
     int bvhHits; // number of hits in the bvh structure - used for debugging
+
+    int surfaceMaterialIdx; // material idx of hit surface
 };
 
 
@@ -610,6 +618,7 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
                 if (!hitRecord.hit) { // is first hit
                     hitRecord.t = thisIntersection;
                     hitRecord.hit = true;
+                    hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
                     
                     vec3 p = ro + rd*thisIntersection;
                     hitRecord.n = (p - positionAndRadius.xyz) * (1.0 / positionAndRadius.w);
@@ -617,6 +626,7 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
                 else if (thisIntersection < hitRecord.t) {
                     hitRecord.t = thisIntersection;
                     hitRecord.hit = true;
+                    hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
                     
                     vec3 p = ro + rd*thisIntersection;
                     hitRecord.n = (p - positionAndRadius.xyz) * (1.0 / positionAndRadius.w);
@@ -640,6 +650,7 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
                 if (!hitRecord.hit) { // is first hit
                     hitRecord.t = thisIntersection;
                     hitRecord.hit = true;
+                    hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
                     
                     vec3 p = ro + rd*thisIntersection;
                     hitRecord.n = normalize(intersectionResult.n);
@@ -647,6 +658,7 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
                 else if (thisIntersection < hitRecord.t) {
                     hitRecord.t = thisIntersection;
                     hitRecord.hit = true;
+                    hitRecord.surfaceMaterialIdx = bvhLeafNodes[leafNodeIdx].materialIdx;
                     
                     vec3 p = ro + rd*thisIntersection;
                     hitRecord.n = normalize(intersectionResult.n);
@@ -773,7 +785,7 @@ struct Material {
     vec4 baseColor;
 };
 
-layout (std430, binding=2) buffer materials {
+layout (std430, binding=2) buffer materialsBuffer {
     Material materials[];
 };
 
@@ -1026,14 +1038,12 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
             // TODO< falloff with distance >
             float lightIntensity = 1.0; // intensity of light
 
-
-            Material testMaterial; // material for testing
-            testMaterial.type = 0; // lambertian
-            testMaterial.baseColor = vec4(1.0, 1.0, 1.0, 1.0);
+            // fetch material from SSBO
+            Material material = materials[hitRecord.surfaceMaterialIdx];
 
             vec3 shadingColor = vec3(0.0); // resulting color
 
-            shadingColor += shadeSurface(lightDir, hitRecord.n, lightIntensity, testMaterial) ;
+            shadingColor += shadeSurface(lightDir, hitRecord.n, lightIntensity, material);
 
 
 
