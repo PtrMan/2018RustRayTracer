@@ -773,6 +773,10 @@ struct Material {
     vec4 baseColor;
 };
 
+layout (std430, binding=2) buffer materials {
+    Material materials[];
+};
+
 // shading function - computes the shading of a material lit by a light
 vec3 shadeSurface(vec3 lightDir, vec3 n, float lightIntensity, Material material) {
     if (material.type == 0) { // lambertian
@@ -1044,12 +1048,6 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
     fragColor = vec4(col,1.0);
     
 }
-
-// TODO< build complete version of encoding and render a bucket! >
-
-
-// TODO< call into mainImage() from main() >
-
 
 
 

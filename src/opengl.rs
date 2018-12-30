@@ -50,6 +50,17 @@ pub struct BvhLeafNode {
 
 
 
+#[repr(C)]
+struct GlslMaterial {
+	pub type_: i32,
+	pub padding0: i32,
+    pub padding1: i32,
+    pub padding2: i32,
+
+    pub baseColor: [f32; 4],
+}
+
+
 extern crate sdl2;
 
 use nalgebra::{U4, Matrix, MatrixArray, Vector4, Vector3};
@@ -81,6 +92,7 @@ pub struct GraphicsEngine {
 	// pub for testing
 	pub bvhNodesSsbo: Option<gl::types::GLuint>,
 	pub bvhLeafNodesSsbo: Option<gl::types::GLuint>,
+	pub materialsSsbo: Option<gl::types::GLuint>,
 }
 
 pub fn makeGraphicsEngine() -> Result<GraphicsEngine,String> {
@@ -140,6 +152,7 @@ pub fn makeGraphicsEngine() -> Result<GraphicsEngine,String> {
 		vao: None,
 		bvhNodesSsbo: None,
 		bvhLeafNodesSsbo: None,
+		materialsSsbo: None,
 	})
 }
 
@@ -205,6 +218,23 @@ impl GraphicsEngine {
 			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhLeafNodesSsbo);
 			gl::BufferData(gl::SHADER_STORAGE_BUFFER, (mem::size_of::<GlslBvhLeafNode>() * maxNumberOfElements) as isize, 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
 			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, bvhLeafNodesSsbo); // because it is at location 1
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
+		}
+
+
+		unsafe {
+			// TODO< make ssbo attribute of shaderprogram and add a drop trait for it >
+			let mut materialsSsbo: gl::types::GLuint = 0;
+
+			use std::mem;
+
+			let maxNumberOfElements = 1 << 8;
+
+			gl::GenBuffers(1, &mut materialsSsbo);
+			self.materialsSsbo = Some(materialsSsbo);
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, materialsSsbo);
+			gl::BufferData(gl::SHADER_STORAGE_BUFFER, (mem::size_of::<GlslMaterial>() * maxNumberOfElements) as isize, 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
+			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 2, materialsSsbo); // because it is at location 2
 			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
 		}
 
@@ -371,40 +401,60 @@ impl GraphicsEngine {
 
 
 
+		{
+			let mut glslBvhLeafNodes: Vec<GlslBvhLeafNode> = Vec::new();
 
-		let mut glslBvhLeafNodes: Vec<GlslBvhLeafNode> = Vec::new();
+			// translate data to GLSL format
+			for iBvhLeafNode in bvhLeafNodes {
+				glslBvhLeafNodes.push(GlslBvhLeafNode{
+					nodeType: iBvhLeafNode.nodeType,
+	    			padding0: 0,
+					padding1: 0,
+					padding2: 0,
 
-		// translate data to GLSL format
-		for iBvhLeafNode in bvhLeafNodes {
-			glslBvhLeafNodes.push(GlslBvhLeafNode{
-				nodeType: iBvhLeafNode.nodeType,
-    			padding0: 0,
-				padding1: 0,
-				padding2: 0,
+					vertex0: [iBvhLeafNode.vertex0.x as f32, iBvhLeafNode.vertex0.y as f32, iBvhLeafNode.vertex0.z as f32, iBvhLeafNode.vertex0.w as f32],
+					vertex1: [iBvhLeafNode.vertex1.x as f32, iBvhLeafNode.vertex1.y as f32, iBvhLeafNode.vertex1.z as f32, iBvhLeafNode.vertex1.w as f32],
+					vertex2: [iBvhLeafNode.vertex2.x as f32, iBvhLeafNode.vertex2.y as f32, iBvhLeafNode.vertex2.z as f32, iBvhLeafNode.vertex2.w as f32],
+				});
 
-				vertex0: [iBvhLeafNode.vertex0.x as f32, iBvhLeafNode.vertex0.y as f32, iBvhLeafNode.vertex0.z as f32, iBvhLeafNode.vertex0.w as f32],
-				vertex1: [iBvhLeafNode.vertex1.x as f32, iBvhLeafNode.vertex1.y as f32, iBvhLeafNode.vertex1.z as f32, iBvhLeafNode.vertex1.w as f32],
-				vertex2: [iBvhLeafNode.vertex2.x as f32, iBvhLeafNode.vertex2.y as f32, iBvhLeafNode.vertex2.z as f32, iBvhLeafNode.vertex2.w as f32],
-			});
+				println!("<{},{},{},{}>", iBvhLeafNode.vertex0.x as f32, iBvhLeafNode.vertex0.y as f32, iBvhLeafNode.vertex0.z as f32, iBvhLeafNode.vertex0.w as f32);
 
-			println!("<{},{},{},{}>", iBvhLeafNode.vertex0.x as f32, iBvhLeafNode.vertex0.y as f32, iBvhLeafNode.vertex0.z as f32, iBvhLeafNode.vertex0.w as f32);
+			}
 
+
+			unsafe {
+				gl::Uniform1i(uniformLocationBvhLeafNodesCount, glslBvhLeafNodes.len() as i32);
+			}
+
+			// update SSBO
+			unsafe {
+				// copy the data to the SSBO
+				gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, self.bvhLeafNodesSsbo.unwrap());
+				gl::BufferSubData(
+					gl::SHADER_STORAGE_BUFFER,
+					0,
+					(std::mem::size_of::<GlslBvhLeafNode>() * glslBvhLeafNodes.len()) as isize,
+					glslBvhLeafNodes.as_mut_ptr() as *const std::ffi::c_void
+				);
+				gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
+			}
 		}
 
-
-		unsafe {
-			gl::Uniform1i(uniformLocationBvhLeafNodesCount, glslBvhLeafNodes.len() as i32);
-		}
 
 		// update SSBO
 		unsafe {
+			let mut glslMaterials: Vec<GlslMaterial> = Vec::new();
+
+			// translate data to GLSL format
+			// TODO
+
 			// copy the data to the SSBO
-			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, self.bvhLeafNodesSsbo.unwrap());
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, self.materialsSsbo.unwrap());
 			gl::BufferSubData(
 				gl::SHADER_STORAGE_BUFFER,
 				0,
-				(std::mem::size_of::<GlslBvhLeafNode>() * glslBvhLeafNodes.len()) as isize,
-				glslBvhLeafNodes.as_mut_ptr() as *const std::ffi::c_void
+				(std::mem::size_of::<GlslMaterial>() * glslMaterials.len()) as isize,
+				glslMaterials.as_mut_ptr() as *const std::ffi::c_void
 			);
 			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
 		}
@@ -432,6 +482,7 @@ impl GraphicsEngine {
 		unsafe {
 			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 0, self.bvhNodesSsbo.unwrap());
 			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, self.bvhLeafNodesSsbo.unwrap());
+			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 2, self.materialsSsbo.unwrap());
 		}
 
 
