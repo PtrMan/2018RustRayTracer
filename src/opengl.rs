@@ -137,6 +137,7 @@ pub fn openglMain(
 		gl::GenBuffers(1, &mut bvhNodesSsbo);
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhNodesSsbo);
 		gl::BufferData(gl::SHADER_STORAGE_BUFFER, ((/* sizeof(shader_data) */ 4*4 + 4*4 + 4*4) * glslBvhNodes.len()) as isize, glslBvhNodes.as_ptr() as *const std::ffi::c_void, gl::DYNAMIC_COPY);
+		gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 0, bvhNodesSsbo); // because it is at location 0
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
 	}
 
@@ -146,6 +147,7 @@ pub fn openglMain(
 		gl::GenBuffers(1, &mut bvhLeafNodesSsbo);
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhLeafNodesSsbo);
 		gl::BufferData(gl::SHADER_STORAGE_BUFFER, ((/* sizeof(shader_data) */ 4*4 + 4*4 + 4*4 + 4*4) * glslBvhLeafNodes.len()) as isize, glslBvhLeafNodes.as_ptr() as *const std::ffi::c_void, gl::DYNAMIC_COPY);
+		gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, bvhLeafNodesSsbo); // because it is at location 1
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
 	}
 
@@ -403,6 +405,26 @@ pub fn openglMain(
 		unsafe {
 			gl::Uniform1i(uniformLocationBvhRootNodeIdx, bvhRootNodeIdx);
 		}
+
+
+		// push data to SSBO
+		/* commented because it is not necessary this way here
+		unsafe {
+			// * get block index
+			let mut blockIndex: gl::types::GLuint = 0;
+			{
+				let ssboName = &CString::new("bvhNode").unwrap();
+				blockIndex = gl::GetProgramResourceIndex(shaderProgram.retId(), gl::SHADER_STORAGE_BLOCK, ssbo.as_ptr());
+			}
+
+			// * connect the shader storage block to the SSBO: we tell the shader on which binding point it will find the SSBO
+			let ssboBindingPointIndex: gl::types::GLuint = 0;
+			gl::ShaderStorageBlockBinding(shaderProgram.retId(), blockIndex, ssboBindingPointIndex);
+
+		}
+		 */
+
+
 
 		// bind SSBO's
 		unsafe {
