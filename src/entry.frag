@@ -1,10 +1,8 @@
 // License: MIT
 
 
-
-// TODO< translate material in RUST >
-// TODO< 
-
+// TODO< fresnel >
+// TODO< uniform parameter for screen ratio >
 
 // TODO< add capped cone as primitive >
 
@@ -1020,17 +1018,17 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
     {
         vec3 rayOrigin = cameraPos;
 
-        BvhHitRecord hitRecord; // used to store the hit
-        //hitRecord.hit = false;
-        //hitRecord.t = -1.0;
-        //hitRecord.bvhHits = 0;
+        BvhHitRecord hitRecord0; // used to store the hit
+        //hitRecord0.hit = false;
+        //hitRecord0.t = -1.0;
+        //hitRecord0.bvhHits = 0;
 
         //int leafNodeIdx = 0; // we just want to shoot the ray against BVH leaf node 0
-        //bvhProcessLeafHit(rayOrigin, dir, leafNodeIdx, /*inout*/hitRecord);
+        //bvhProcessLeafHit(rayOrigin, dir, leafNodeIdx, /*inout*/hitRecord0);
 
-        bvhCheckAgainstLeafs(rayOrigin, dir, /*inout*/hitRecord);
+        bvhCheckAgainstLeafs(rayOrigin, dir, /*inout*/hitRecord0);
 
-        if (hitRecord.hit) {
+        if (hitRecord0.hit) {
             // compute primitive shading
 
             vec3 lightDir = vec3(0.0, 0.0, -1.0); // direction to light (normalized)
@@ -1039,15 +1037,47 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
             float lightIntensity = 1.0; // intensity of light
 
             // fetch material from SSBO
-            Material material = materials[hitRecord.surfaceMaterialIdx];
+            Material material = materials[hitRecord0.surfaceMaterialIdx];
 
             vec3 shadingColor = vec3(0.0); // resulting color
 
-            shadingColor += shadeSurface(lightDir, hitRecord.n, lightIntensity, material);
+            shadingColor += shadeSurface(lightDir, hitRecord0.n, lightIntensity, material);
 
 
+            // compute reflection
+            vec3 reflectedColor = vec3(0.0);
 
-            col = shadingColor;
+            {
+                vec3 hitPosition = rayOrigin + dir * hitRecord0.t;
+
+                vec3 rayOrigin1 = hitPosition + hitRecord0.n * 0.05; // mve origin a bit above the surface
+
+                vec3 dir1; // reflected direction
+                // compute reflected direction
+                dir1 = reflect(dir, hitRecord0.n);
+
+                BvhHitRecord hitRecord1; // used to store the hit
+                bvhCheckAgainstLeafs(rayOrigin1, dir1, /*inout*/hitRecord1);
+
+                if (hitRecord1.hit) {
+                    // compute primitive shading
+
+                    vec3 lightDir = vec3(0.0, 0.0, -1.0); // direction to light (normalized)
+                    
+                    // TODO< falloff with distance >
+                    float lightIntensity = 1.0; // intensity of light
+
+                    // fetch material from SSBO
+                    Material material1 = materials[hitRecord1.surfaceMaterialIdx];
+
+                    vec3 shadingColor = vec3(0.0); // resulting color
+
+                    reflectedColor += shadeSurface(lightDir, hitRecord1.n, lightIntensity, material1);
+                }
+            }
+
+
+            col = shadingColor * 0.7 + reflectedColor * 0.3;
         }
     }
 #endif
@@ -1091,7 +1121,7 @@ uniform vec4 ourColor;
 void main() {
     vec4 color2; // will contain color
     vec2 uv = IN.Color.xy; // screen space UV
-    float screenRatio = 1.0;
+    float screenRatio = 700.0 / 900.0; // from pixel to ratio
     mainImage2(color2, uv, screenRatio);
 
     Color = vec4(color2.xyz, 1.0f);

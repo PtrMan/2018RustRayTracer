@@ -134,6 +134,8 @@ pub fn makeGraphicsEngine() -> Result<GraphicsEngine,String> {
 	    gl::load_with(|s| videoSubsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
 	    eventPump = sdl.event_pump().unwrap();
+
+	    videoSubsystem.gl_set_swap_interval(0); // disable VSYNC
     }
 
     Ok(GraphicsEngine {
@@ -424,9 +426,6 @@ impl GraphicsEngine {
 					vertex1: [iBvhLeafNode.vertex1.x as f32, iBvhLeafNode.vertex1.y as f32, iBvhLeafNode.vertex1.z as f32, iBvhLeafNode.vertex1.w as f32],
 					vertex2: [iBvhLeafNode.vertex2.x as f32, iBvhLeafNode.vertex2.y as f32, iBvhLeafNode.vertex2.z as f32, iBvhLeafNode.vertex2.w as f32],
 				});
-
-				println!("<{},{},{},{}>", iBvhLeafNode.vertex0.x as f32, iBvhLeafNode.vertex0.y as f32, iBvhLeafNode.vertex0.z as f32, iBvhLeafNode.vertex0.w as f32);
-
 			}
 
 
