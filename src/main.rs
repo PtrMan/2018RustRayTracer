@@ -1662,7 +1662,7 @@ pub fn main() {
     bvhLeafNodes.push(opengl::BvhLeafNode {
         nodeType: 0, // 0 is sphere
 
-        vertex0: Vector4::<f64>::new(0.0, 0.0, 5.0, 1.0), // position and radius
+        vertex0: Vector4::<f64>::new(0.0, 0.0, 10.0, 1.0), // position and radius
         vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
         vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
     }); 
@@ -1673,7 +1673,7 @@ pub fn main() {
         &Vec::new(), // bvhNodes
         0, // bvhRootNodeIdx
 
-        &Vec::new() // BvhLeafNodes
+        &bvhLeafNodes // BvhLeafNodes
     );
 }
 

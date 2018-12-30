@@ -566,7 +566,6 @@ BvhNodeInfo2 retBvhNodeAt(int idx) {
 }
 
 
-/*
 
 
 
@@ -646,6 +645,7 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
     }
 }
 
+/*
 
 
 // traveral of bvh
@@ -831,7 +831,11 @@ vec4 rayIntoBucket(int bucketX, int bucketY,  vec3 cameraP, vec3 rayDir) {
 //#define RENDERTEST_AABB0
 
 // do we want to test-render the BVH test
-#define RENDERTEST_BVH0
+//#define RENDERTEST_BVH0
+
+// do we want to render the BVH leaf nodes without walking the BVH?
+// TODO< test it with this after debugging issue with SSBO
+#define RENDERTEST_BYPASS_BVH
 
 // raytracing of simple atmosphere
 void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
@@ -1013,6 +1017,28 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
     */
 #endif
 
+
+
+#ifdef RENDERTEST_BYPASS_BVH
+    {
+        vec3 rayOrigin = cameraPos;
+
+        BvhHitRecord hitRecord; // used to store the hit
+        hitRecord.hit = false;
+        hitRecord.t = -1.0;
+        hitRecord.bvhHits = 0;
+
+        int leafNodeIdx = 0; // we just want to shoot the ray against BVH leaf node 0
+        bvhProcessLeafHit(rayOrigin, dir, leafNodeIdx, /*inout*/hitRecord);
+
+        if (hitRecord.hit) {
+            col = vec3(0.0, 1.0, 1.0); // debug a hit with blue
+        }
+    }
+#endif
+
+
+
     // Output to screen
     fragColor = vec4(col,1.0);
     
@@ -1060,5 +1086,6 @@ void main() {
     mainImage2(color2, uv, screenRatio);
 
     Color = vec4(color2.xyz, 1.0f);
+    //Color = vec4(uv, 0.0, 1.0);
     //Color = ourColor;
 }

@@ -132,35 +132,17 @@ pub fn openglMain(
 
 
 	unsafe {
-		let mut glslBvhNodes: Vec<GlslBvhNode> = Vec::new();
-
 		gl::GenBuffers(1, &mut bvhNodesSsbo);
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhNodesSsbo);
-		gl::BufferData(gl::SHADER_STORAGE_BUFFER, ((/* sizeof(shader_data) */ 4*4 + 4*4 + 4*4) * glslBvhNodes.len()) as isize, glslBvhNodes.as_ptr() as *const std::ffi::c_void, gl::DYNAMIC_COPY);
+		gl::BufferData(gl::SHADER_STORAGE_BUFFER, (4*(4+4+4)), 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
 		gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 0, bvhNodesSsbo); // because it is at location 0
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
 	}
 
 	unsafe {
-		let mut glslBvhLeafNodes: Vec<GlslBvhLeafNode> = Vec::new();
-
-		// translate data to GLSL format
-		for iBvhLeafNode in bvhLeafNodes {
-			glslBvhLeafNodes.push(GlslBvhLeafNode{
-				nodeType: iBvhLeafNode.nodeType,
-    			padding0: 0,
-				padding1: 0,
-				padding2: 0,
-
-				vertex0: [iBvhLeafNode.vertex0.x as f32, iBvhLeafNode.vertex0.y as f32, iBvhLeafNode.vertex0.z as f32, iBvhLeafNode.vertex0.w as f32],
-				vertex1: [iBvhLeafNode.vertex1.x as f32, iBvhLeafNode.vertex1.y as f32, iBvhLeafNode.vertex1.z as f32, iBvhLeafNode.vertex1.w as f32],
-				vertex2: [iBvhLeafNode.vertex2.x as f32, iBvhLeafNode.vertex2.y as f32, iBvhLeafNode.vertex2.z as f32, iBvhLeafNode.vertex2.w as f32],
-			});
-		}
-
 		gl::GenBuffers(1, &mut bvhLeafNodesSsbo);
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhLeafNodesSsbo);
-		gl::BufferData(gl::SHADER_STORAGE_BUFFER, ((/* sizeof(shader_data) */ 4*4 + 4*4 + 4*4 + 4*4) * glslBvhLeafNodes.len()) as isize, glslBvhLeafNodes.as_ptr() as *const std::ffi::c_void, gl::DYNAMIC_COPY);
+		gl::BufferData(gl::SHADER_STORAGE_BUFFER, (4*(4 + 3*4)), 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
 		gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, bvhLeafNodesSsbo); // because it is at location 1
 		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
 	}
@@ -437,6 +419,57 @@ pub fn openglMain(
 
 		}
 		 */
+
+
+		// update SSBO
+		unsafe {
+			let mut glslBvhLeafNodes: Vec<GlslBvhLeafNode> = Vec::new();
+
+			// translate data to GLSL format
+			for iBvhLeafNode in bvhLeafNodes {
+				glslBvhLeafNodes.push(GlslBvhLeafNode{
+					nodeType: iBvhLeafNode.nodeType,
+	    			padding0: 0,
+					padding1: 0,
+					padding2: 0,
+
+					vertex0: [iBvhLeafNode.vertex0.x as f32, iBvhLeafNode.vertex0.y as f32, iBvhLeafNode.vertex0.z as f32, iBvhLeafNode.vertex0.w as f32],
+					vertex1: [iBvhLeafNode.vertex1.x as f32, iBvhLeafNode.vertex1.y as f32, iBvhLeafNode.vertex1.z as f32, iBvhLeafNode.vertex1.w as f32],
+					vertex2: [iBvhLeafNode.vertex2.x as f32, iBvhLeafNode.vertex2.y as f32, iBvhLeafNode.vertex2.z as f32, iBvhLeafNode.vertex2.w as f32],
+				});
+
+				println!("<{},{},{},{}>", iBvhLeafNode.vertex0.x as f32, iBvhLeafNode.vertex0.y as f32, iBvhLeafNode.vertex0.z as f32, iBvhLeafNode.vertex0.w as f32);
+
+			}
+
+
+			// copy the data to the SSBO
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhLeafNodesSsbo);
+			gl::BufferSubData(
+				gl::SHADER_STORAGE_BUFFER,
+				0,
+				((/* sizeof(shader_data) */ 4*4 + 4*4 + 4*4 + 4*4) * glslBvhLeafNodes.len()) as isize,
+				glslBvhLeafNodes.as_mut_ptr() as *const std::ffi::c_void
+			);
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
+		}
+
+
+		/* commented because this is wrong/not necessary
+		unsafe {
+			// * get block index
+			let mut blockIndex: gl::types::GLuint = 0;
+			{
+				let ssboName = &CString::new("bvhLeafNode").unwrap();
+				blockIndex = gl::GetProgramResourceIndex(shaderProgram.retId(), gl::SHADER_STORAGE_BLOCK, ssboName.as_ptr());
+			}
+
+			// * connect the shader storage block to the SSBO: we tell the shader on which binding point it will find the SSBO
+			let ssboBindingPointIndex: gl::types::GLuint = 1;
+			gl::ShaderStorageBlockBinding(shaderProgram.retId(), blockIndex, ssboBindingPointIndex);
+
+		}
+		*/
 
 
 
