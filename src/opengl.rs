@@ -1,7 +1,5 @@
 #![allow(non_snake_case)]
 
-// TODO< translate between normal struct and glsl struct and push it to OpenGL >
-
 
 
 
@@ -58,25 +56,44 @@ use nalgebra::{U4, Matrix, MatrixArray, Vector4, Vector3};
 
 use super::FpsMeasure;
 
-pub fn openglMain(
-	bvhNodes: &Vec<BvhNode>,
-	bvhRootNodeIdx:i32,
 
-	bvhLeafNodes: &Vec<BvhLeafNode>
-) {
-    
-    let mut eventPump;
+// structure to keep the whole graphics engine in one place
+pub struct GraphicsEngine {
+	sdl: sdl2::Sdl, // sdl handle
+	window: sdl2::video::Window,
+	videoSubsystem: sdl2::VideoSubsystem, // handle for sdl video subsystem
+
+	glContext: sdl2::video::GLContext,
+	pub eventPump: sdl2::EventPump,
+
+
+	// pub for testing
+	pub shaderProgram: Option<renderer_gl::OpenGlProgram>, // main shader program which implements the raytracer
+
+	// pub for testing
+	pub vao: Option<gl::types::GLuint>, // VAO for the full screen quad
+
+
+	// pub for testing
+	pub bvhNodesSsbo: Option<gl::types::GLuint>,
+	pub bvhLeafNodesSsbo: Option<gl::types::GLuint>,
+}
+
+pub fn makeGraphicsEngine() -> Result<GraphicsEngine,String> {
+	let mut eventPump;
     
     // most if not all variables have to be ept alive as long as the program is used
     let sdl;
     let window;
     let videoSubsystem;
-    let glAttr;
+    
     let glContext;
-    let gl;
 
     { // initialize sdl and OpenGL
+	    let glAttr;
+
 	    sdl = sdl2::init().unwrap();
+
 	    videoSubsystem = sdl.video().unwrap();
 
 	    glAttr = videoSubsystem.gl_attr();
@@ -85,153 +102,193 @@ pub fn openglMain(
 		glAttr.set_context_version(4, 3);
 
 	    window = videoSubsystem
-	        .window("Game", 900, 700)
+	        .window("Engine", 900, 700)
 	        .opengl() // we need openGL support
-	        .resizable()
+	        //.resizable()
 	        .build()
 	        .unwrap();
 
 	    glContext = window.gl_create_context().unwrap();
-	    gl = gl::load_with(|s| videoSubsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
+	    gl::load_with(|s| videoSubsystem.gl_get_proc_address(s) as *const std::os::raw::c_void);
 
 	    eventPump = sdl.event_pump().unwrap();
     }
 
+    Ok(GraphicsEngine {
+		sdl: sdl,
+		videoSubsystem: videoSubsystem,
+		window: window,
+
+		glContext: glContext,
+		eventPump: eventPump,
 
 
-    unsafe {
-	    gl::Viewport(0, 0, 900, 700);
-	    gl::ClearColor(0.3, 0.3, 0.5, 1.0);
-	}
+
+		shaderProgram: None,
+		vao: None,
+		bvhNodesSsbo: None,
+		bvhLeafNodesSsbo: None,
+	})
+}
+
+impl GraphicsEngine {
+	// initializes everything and allocates stuff
+	pub fn initAndAlloc(&mut self) {
+		use std::ffi::CString;
+
+	    unsafe {
+		    gl::Viewport(0, 0, 900, 700);
+		    gl::ClearColor(0.3, 0.3, 0.5, 1.0);
+		}
 
 
-	
-	use std::ffi::CString;
+		let vertShader = renderer_gl::OpenGlShader::fromVertSource(
+		    &CString::new(include_str!("simple.vert")).unwrap()
+		).unwrap();
 
-	let vertShader = renderer_gl::OpenGlShader::fromVertSource(
-	    &CString::new(include_str!("simple.vert")).unwrap()
-	).unwrap();
+		let fragShader = renderer_gl::OpenGlShader::fromFragSource(
+		    &CString::new("#version 430 core\n".to_owned() + include_str!("entry.frag")).unwrap()
+		).unwrap();
 
-	let fragShader = renderer_gl::OpenGlShader::fromFragSource(
-	    &CString::new("#version 430 core\n".to_owned() + include_str!("entry.frag")).unwrap()
-	).unwrap();
+		let shaderProgram = renderer_gl::OpenGlProgram::fromShaders(
+	    	&[vertShader, fragShader]
+		).unwrap();
 
-	let shaderProgram = renderer_gl::OpenGlProgram::fromShaders(
-    	&[vertShader, fragShader]
-	).unwrap();
-
-	
+		
 
 
-	shaderProgram.use_();
+		shaderProgram.use_();
 
-
-	// TODO< make ssbo attribute of shaderprogram and add a drop trait for it >
-	let mut bvhNodesSsbo: gl::types::GLuint = 0;
-	let mut bvhLeafNodesSsbo: gl::types::GLuint = 0;
-
-
-	unsafe {
-		use std::mem;
-
-		let maxNumberOfElements = 1 << 12;
-
-		gl::GenBuffers(1, &mut bvhNodesSsbo);
-		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhNodesSsbo);
-		gl::BufferData(gl::SHADER_STORAGE_BUFFER, (mem::size_of::<GlslBvhNode>() * maxNumberOfElements) as isize, 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
-		gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 0, bvhNodesSsbo); // because it is at location 0
-		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
-	}
-
-	unsafe {
-		use std::mem;
-
-		let maxNumberOfElements = 1 << 12;
-
-		gl::GenBuffers(1, &mut bvhLeafNodesSsbo);
-		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhLeafNodesSsbo);
-		gl::BufferData(gl::SHADER_STORAGE_BUFFER, (mem::size_of::<GlslBvhLeafNode>() * maxNumberOfElements) as isize, 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
-		gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, bvhLeafNodesSsbo); // because it is at location 1
-		gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
-	}
+		self.shaderProgram = Some(shaderProgram);
 
 
 
 
+		unsafe {
+			// TODO< make ssbo attribute of shaderprogram and add a drop trait for it >
+			let mut bvhNodesSsbo: gl::types::GLuint = 0;
+
+			use std::mem;
+
+			let maxNumberOfElements = 1 << 12;
+
+			gl::GenBuffers(1, &mut bvhNodesSsbo);
+			self.bvhNodesSsbo = Some(bvhNodesSsbo);
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhNodesSsbo);
+			gl::BufferData(gl::SHADER_STORAGE_BUFFER, (mem::size_of::<GlslBvhNode>() * maxNumberOfElements) as isize, 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
+			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 0, bvhNodesSsbo); // because it is at location 0
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
+		}
+
+		unsafe {
+			// TODO< make ssbo attribute of shaderprogram and add a drop trait for it >
+			let mut bvhLeafNodesSsbo: gl::types::GLuint = 0;
+
+			use std::mem;
+
+			let maxNumberOfElements = 1 << 12;
+
+			gl::GenBuffers(1, &mut bvhLeafNodesSsbo);
+			self.bvhLeafNodesSsbo = Some(bvhLeafNodesSsbo);
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhLeafNodesSsbo);
+			gl::BufferData(gl::SHADER_STORAGE_BUFFER, (mem::size_of::<GlslBvhLeafNode>() * maxNumberOfElements) as isize, 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
+			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, bvhLeafNodesSsbo); // because it is at location 1
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
+		}
 
 
-	let graphicsApiVertices: Vec<f32> = vec![
-	    // positions      // colors
-	    1.0, -1.0, 0.0,   1.0, 0.0, 0.0,   // bottom right
-	    -1.0, -1.0, 0.0,  0.0, 0.0, 0.0,   // bottom left
-	    -1.0,  1.0, 0.0,   0.0, 1.0, 0.0,    // top
 
-	    1.0, 1.0, 0.0,  1.0, 1.0, 0.0,   // bottom left
-	    1.0, -1.0, 0.0,   1.0, 0.0, 0.0,   // bottom right
+
+
+
+		let graphicsApiVertices: Vec<f32> = vec![
+		    // positions      // colors
+		    1.0, -1.0, 0.0,   1.0, 0.0, 0.0,   // bottom right
+		    -1.0, -1.0, 0.0,  0.0, 0.0, 0.0,   // bottom left
+		    -1.0,  1.0, 0.0,   0.0, 1.0, 0.0,    // top
+
+		    1.0, 1.0, 0.0,  1.0, 1.0, 0.0,   // bottom left
+		    1.0, -1.0, 0.0,   1.0, 0.0, 0.0,   // bottom right
+		    
+		    -1.0,  1.0, 0.0,   0.0, 1.0, 0.0    // top
+		];
+
+		let mut vbo: gl::types::GLuint = 0;
+		unsafe {
+	    	gl::GenBuffers(1, &mut vbo);
+		}
+		// TODO< handling of error of buffer generation >
+
+		unsafe {
+		    gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+		    gl::BufferData(
+		        gl::ARRAY_BUFFER, // target
+		        (graphicsApiVertices.len() * std::mem::size_of::<f32>()) as gl::types::GLsizeiptr, // size of data in bytes
+		        graphicsApiVertices.as_ptr() as *const gl::types::GLvoid, // pointer to data
+		        gl::STATIC_DRAW, // usage
+		    );
+		    gl::BindBuffer(gl::ARRAY_BUFFER, 0); // unbind the buffer
+		}
+
+		let mut vao: gl::types::GLuint = 0;
+		unsafe {
+		    gl::GenVertexArrays(1, &mut vao);
+		}
+		self.vao = Some(vao);
+
+		// make it current by binding it
+		unsafe {
+	    	gl::BindVertexArray(self.vao.unwrap());
 	    
-	    -1.0,  1.0, 0.0,   0.0, 1.0, 0.0    // top
-	];
+	    	gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+		}
 
-	let mut vbo: gl::types::GLuint = 0;
-	unsafe {
-    	gl::GenBuffers(1, &mut vbo);
+		// specify data layout for attribute 0
+		unsafe {
+			gl::EnableVertexAttribArray(0); // this is "layout (location = 0)" in vertex shader
+		    gl::VertexAttribPointer(
+		        0, // index of the generic vertex attribute ("layout (location = 0)")
+		        3, // the number of components per generic vertex attribute
+		        gl::FLOAT, // data type
+		        gl::FALSE, // normalized (int-to-float conversion)
+		        (6 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
+		        std::ptr::null() // offset of the first component
+		    );
+		}
+
+		// specify data layout for attribute 1
+		unsafe {
+			gl::EnableVertexAttribArray(1);
+		    gl::VertexAttribPointer(
+		        1, // index of the generic vertex attribute
+		        3, // the number of components per generic vertex attribute
+		        gl::FLOAT,
+		        gl::FALSE, // normalized (int-to-float conversion)
+		        (6 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
+		        (3 * std::mem::size_of::<f32>()) as *const gl::types::GLvoid // offset of the first component
+		    );
+		}
+
+		// unbind
+		unsafe {
+			gl::BindBuffer(gl::ARRAY_BUFFER, 0);
+		    gl::BindVertexArray(0);
+		}
 	}
-	// TODO< handling of error of buffer generation >
+}
 
-	unsafe {
-	    gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-	    gl::BufferData(
-	        gl::ARRAY_BUFFER, // target
-	        (graphicsApiVertices.len() * std::mem::size_of::<f32>()) as gl::types::GLsizeiptr, // size of data in bytes
-	        graphicsApiVertices.as_ptr() as *const gl::types::GLvoid, // pointer to data
-	        gl::STATIC_DRAW, // usage
-	    );
-	    gl::BindBuffer(gl::ARRAY_BUFFER, 0); // unbind the buffer
-	}
+pub fn openglMain(
+	bvhNodes: &Vec<BvhNode>,
+	bvhRootNodeIdx:i32,
 
-	let mut vao: gl::types::GLuint = 0;
-	unsafe {
-	    gl::GenVertexArrays(1, &mut vao);
-	}
+	bvhLeafNodes: &Vec<BvhLeafNode>
+) {
 
-	// make it current by binding it
-	unsafe {
-    	gl::BindVertexArray(vao);
+
+	let mut graphicsEngine = makeGraphicsEngine().unwrap();
     
-    	gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-	}
-
-	// specify data layout for attribute 0
-	unsafe {
-		gl::EnableVertexAttribArray(0); // this is "layout (location = 0)" in vertex shader
-	    gl::VertexAttribPointer(
-	        0, // index of the generic vertex attribute ("layout (location = 0)")
-	        3, // the number of components per generic vertex attribute
-	        gl::FLOAT, // data type
-	        gl::FALSE, // normalized (int-to-float conversion)
-	        (6 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
-	        std::ptr::null() // offset of the first component
-	    );
-	}
-
-	// specify data layout for attribute 1
-	unsafe {
-		gl::EnableVertexAttribArray(1);
-	    gl::VertexAttribPointer(
-	        1, // index of the generic vertex attribute
-	        3, // the number of components per generic vertex attribute
-	        gl::FLOAT,
-	        gl::FALSE, // normalized (int-to-float conversion)
-	        (6 * std::mem::size_of::<f32>()) as gl::types::GLint, // stride (byte offset between consecutive attributes)
-	        (3 * std::mem::size_of::<f32>()) as *const gl::types::GLvoid // offset of the first component
-	    );
-	}
-
-	// unbind
-	unsafe {
-		gl::BindBuffer(gl::ARRAY_BUFFER, 0);
-	    gl::BindVertexArray(0);
-	}
+	graphicsEngine.initAndAlloc();
+	
 
 
 
@@ -243,18 +300,24 @@ pub fn openglMain(
     	framesInThisSecond: 0,
     };
 
+
+	let shaderProgram = &graphicsEngine.shaderProgram.unwrap();
+
     'main: loop {
-        for event in eventPump.poll_iter() {
+        for event in graphicsEngine.eventPump.poll_iter() {
             match event {
                 sdl2::event::Event::Quit {..} => break 'main,
                 _ => {},
             }
         }
 
+        use std::ffi::CString;
+
         unsafe {
 	    	gl::ClearColor(0.3, 0.3, 0.5, 1.0);
 	    	gl::Clear(gl::COLOR_BUFFER_BIT);
 		}
+
 
 
 		let uniformLocationVertexColor;
@@ -333,7 +396,7 @@ pub fn openglMain(
 
 
 			// copy the data to the SSBO
-			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, bvhLeafNodesSsbo);
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, graphicsEngine.bvhLeafNodesSsbo.unwrap());
 			gl::BufferSubData(
 				gl::SHADER_STORAGE_BUFFER,
 				0,
@@ -364,8 +427,8 @@ pub fn openglMain(
 
 		// bind SSBO's
 		unsafe {
-			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 0, bvhNodesSsbo);
-			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, bvhLeafNodesSsbo);
+			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 0, graphicsEngine.bvhNodesSsbo.unwrap());
+			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, graphicsEngine.bvhLeafNodesSsbo.unwrap());
 		}
 
 
@@ -389,7 +452,7 @@ pub fn openglMain(
 
 
 		unsafe {
-		    gl::BindVertexArray(vao);
+		    gl::BindVertexArray(graphicsEngine.vao.unwrap());
 		    gl::DrawArrays(
 		        gl::TRIANGLES, // mode
 		        0, // starting index in the enabled arrays
@@ -397,7 +460,7 @@ pub fn openglMain(
 		    );
 		}
 
-		window.gl_swap_window();
+		graphicsEngine.window.gl_swap_window();
 
 		fpsMeasure.tick();
     }
