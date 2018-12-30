@@ -263,50 +263,8 @@ pub fn openglMain(
 			uniformLocationVertexColor = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
 		}
 
-		//let uniformLocationBvhNodeChildrenLeft;
-		//let uniformLocationBvhNodeChildrenRight;
-		//let uniformLocationBvhIsLeaf;
-		//let uniformLocationBvhAabbCenter;
-		//let uniformLocationBvhAabbExtend;
-		//let uniformLocationBvhLeafNodeIndices;
+
 		let uniformLocationBvhRootNodeIdx;
-
-		//let uniformLocationBvhLeafNodeType;
-		//let uniformLocationBvhLeafNodeVertex0;
-		//let uniformLocationBvhLeafNodeVertex1;
-		//let uniformLocationBvhLeafNodeVertex2;
-
-		/*
-		unsafe {
-			let uniformName = &CString::new("bvhNodeChildrenLeft").unwrap();
-			uniformLocationBvhNodeChildrenLeft = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
-		}
-
-		unsafe {
-			let uniformName = &CString::new("bvhNodeChildrenRight").unwrap();
-			uniformLocationBvhNodeChildrenRight = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
-		}
-
-		unsafe {
-			let uniformName = &CString::new("bvhIsLeaf").unwrap();
-			uniformLocationBvhIsLeaf = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
-		}
-
-		unsafe {
-			let uniformName = &CString::new("bvhAabbCenter").unwrap();
-			uniformLocationBvhAabbCenter = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
-		}
-
-		unsafe {
-			let uniformName = &CString::new("bvhAabbExtend").unwrap();
-			uniformLocationBvhAabbExtend = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
-		}
-
-		unsafe {
-			let uniformName = &CString::new("bvhLeafNodeIndices").unwrap();
-			uniformLocationBvhLeafNodeIndices = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
-		}
-		*/
 
 		unsafe {
 			let uniformName = &CString::new("bvhRootNodeIdx").unwrap();
@@ -314,30 +272,6 @@ pub fn openglMain(
 		}
 
 
-
-
-
-		/*
-		unsafe {
-			let uniformName = &CString::new("bvhLeafNodeType").unwrap();
-			uniformLocationBvhLeafNodeType = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
-		}
-
-		unsafe {
-			let uniformName = &CString::new("bvhLeafNodeVertex0").unwrap();
-			uniformLocationBvhLeafNodeVertex0 = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
-		}
-
-		unsafe {
-			let uniformName = &CString::new("bvhLeafNodeVertex1").unwrap();
-			uniformLocationBvhLeafNodeVertex1 = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
-		}
-
-		unsafe {
-			let uniformName = &CString::new("bvhLeafNodeVertex2").unwrap();
-			uniformLocationBvhLeafNodeVertex2 = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
-		}
-*/
 
 
 
@@ -352,59 +286,6 @@ pub fn openglMain(
 
 		shaderProgram.use_();
 
-		/*
-		unsafe {
-			let uniformVector:&Vec<i32> = &bvhNodeChildrenLeft;
-			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
-			gl::Uniform1iv(uniformLocationBvhNodeChildrenLeft, uniformVector.len() as i32, ptr);
-		}
-
-		unsafe {
-			let uniformVector:&Vec<i32> = &bvhNodeChildrenRight;
-			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
-			gl::Uniform1iv(uniformLocationBvhNodeChildrenRight, uniformVector.len() as i32, ptr);
-		}
-
-		unsafe {
-			let uniformVector:&Vec<i32> = &bvhIsLeaf;
-			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
-			gl::Uniform1iv(uniformLocationBvhIsLeaf, uniformVector.len() as i32, ptr);
-		}
-
-		unsafe {
-			let mut uniformVector:Vec<f32> = Vec::new();
-			for i in bvhAabbCenter {
-				uniformVector.push(i.x as f32);
-				uniformVector.push(i.y as f32);
-				uniformVector.push(i.z as f32);
-				uniformVector.push(1.0f32);
-			}
-
-
-			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
-			gl::Uniform4fv(uniformLocationBvhAabbCenter, (uniformVector.len() as i32)/4, ptr);
-		}
-
-		unsafe {
-			let mut uniformVector:Vec<f32> = Vec::new();
-			for i in bvhAabbExtend {
-				uniformVector.push(i.x as f32);
-				uniformVector.push(i.y as f32);
-				uniformVector.push(i.z as f32);
-				uniformVector.push(1.0f32);
-			}
-
-
-			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
-			gl::Uniform4fv(uniformLocationBvhAabbExtend, (uniformVector.len() as i32)/4, ptr);
-		}
-
-		unsafe {
-			let uniformVector:&Vec<i32> = &bvhLeafNodeIndices;
-			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
-			gl::Uniform1iv(uniformLocationBvhLeafNodeIndices, uniformVector.len() as i32, ptr);
-		}
-		*/
 
 		unsafe {
 			gl::Uniform1i(uniformLocationBvhRootNodeIdx, bvhRootNodeIdx);
@@ -487,53 +368,6 @@ pub fn openglMain(
 			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, bvhLeafNodesSsbo);
 		}
 
-
-		/*
-		unsafe {
-			let uniformVector:&Vec<i32> = &bvhLeafNodeType;
-			let ptr = uniformVector.as_ptr() as *const gl::types::GLint;
-			gl::Uniform1iv(uniformLocationBvhLeafNodeType, uniformVector.len() as i32, ptr);
-		}
-
-		unsafe {
-			let mut uniformVector:Vec<f32> = Vec::new();
-			for i in bvhLeafNodeVertex0 {
-				uniformVector.push(i.x as f32);
-				uniformVector.push(i.y as f32);
-				uniformVector.push(i.z as f32);
-				uniformVector.push(i.w as f32);
-			}
-
-			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
-			gl::Uniform4fv(uniformLocationBvhLeafNodeVertex0, (uniformVector.len() as i32)/4, ptr);
-		}
-
-		unsafe {
-			let mut uniformVector:Vec<f32> = Vec::new();
-			for i in bvhLeafNodeVertex1 {
-				uniformVector.push(i.x as f32);
-				uniformVector.push(i.y as f32);
-				uniformVector.push(i.z as f32);
-				uniformVector.push(i.w as f32);
-			}
-
-			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
-			gl::Uniform4fv(uniformLocationBvhLeafNodeVertex1, (uniformVector.len() as i32)/4, ptr);
-		}
-
-		unsafe {
-			let mut uniformVector:Vec<f32> = Vec::new();
-			for i in bvhLeafNodeVertex2 {
-				uniformVector.push(i.x as f32);
-				uniformVector.push(i.y as f32);
-				uniformVector.push(i.z as f32);
-				uniformVector.push(i.w as f32);
-			}
-
-			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
-			gl::Uniform4fv(uniformLocationBvhLeafNodeVertex2, (uniformVector.len() as i32)/4, ptr);
-		}
-		*/
 
 
 
