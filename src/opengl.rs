@@ -67,6 +67,10 @@ pub struct GraphicsEngine {
 	pub eventPump: sdl2::EventPump,
 
 
+	// used to measure the frame timing and FPS
+	pub fpsMeasure: FpsMeasure,
+
+
 	// pub for testing
 	pub shaderProgram: Option<renderer_gl::OpenGlProgram>, // main shader program which implements the raytracer
 
@@ -121,6 +125,14 @@ pub fn makeGraphicsEngine() -> Result<GraphicsEngine,String> {
 
 		glContext: glContext,
 		eventPump: eventPump,
+
+
+		fpsMeasure: FpsMeasure{
+			lastSystemTime: 0,
+	    	lastSecondSystemTime: 0,
+
+	    	framesInThisSecond: 0,
+	    },
 
 
 
@@ -275,43 +287,21 @@ impl GraphicsEngine {
 		    gl::BindVertexArray(0);
 		}
 	}
-}
 
-pub fn openglMain(
-	bvhNodes: &Vec<BvhNode>,
-	bvhRootNodeIdx:i32,
+	pub fn frame(
+		&mut self,
 
-	bvhLeafNodes: &Vec<BvhLeafNode>
-) {
+		bvhNodes: &Vec<BvhNode>,
+		bvhRootNodeIdx:i32,
 
-
-	let mut graphicsEngine = makeGraphicsEngine().unwrap();
-    
-	graphicsEngine.initAndAlloc();
-	
-
-
-
-
-	let mut fpsMeasure = FpsMeasure{
-		lastSystemTime: 0,
-    	lastSecondSystemTime: 0,
-
-    	framesInThisSecond: 0,
-    };
-
-
-	let shaderProgram = &graphicsEngine.shaderProgram.unwrap();
-
-    'main: loop {
-        for event in graphicsEngine.eventPump.poll_iter() {
-            match event {
-                sdl2::event::Event::Quit {..} => break 'main,
-                _ => {},
-            }
-        }
+		bvhLeafNodes: &Vec<BvhLeafNode>
+	) {
 
         use std::ffi::CString;
+
+        
+
+
 
         unsafe {
 	    	gl::ClearColor(0.3, 0.3, 0.5, 1.0);
@@ -320,34 +310,31 @@ pub fn openglMain(
 
 
 
-		let uniformLocationVertexColor;
-		unsafe {
-			let uniformName = &CString::new("ourColor").unwrap();
-			uniformLocationVertexColor = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
-		}
+		let mut uniformLocationVertexColor = 0;
+		let mut uniformLocationBvhRootNodeIdx = 0;
 
 
-		let uniformLocationBvhRootNodeIdx;
+		match &self.shaderProgram {
+        	Some(shaderProgram) => {
+				unsafe {
+					let uniformName = &CString::new("ourColor").unwrap();
+					uniformLocationVertexColor = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+				}
 
-		unsafe {
-			let uniformName = &CString::new("bvhRootNodeIdx").unwrap();
-			uniformLocationBvhRootNodeIdx = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
-		}
+				unsafe {
+					let uniformName = &CString::new("bvhRootNodeIdx").unwrap();
+					uniformLocationBvhRootNodeIdx = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+				}
+        	}
+        	None => {}
+        }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-		shaderProgram.use_();
+		match &self.shaderProgram {
+        	Some(shaderProgram) => {
+        		shaderProgram.use_();
+        	}
+        	None => {}
+        }
 
 
 		unsafe {
@@ -396,7 +383,7 @@ pub fn openglMain(
 
 
 			// copy the data to the SSBO
-			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, graphicsEngine.bvhLeafNodesSsbo.unwrap());
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, self.bvhLeafNodesSsbo.unwrap());
 			gl::BufferSubData(
 				gl::SHADER_STORAGE_BUFFER,
 				0,
@@ -427,8 +414,8 @@ pub fn openglMain(
 
 		// bind SSBO's
 		unsafe {
-			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 0, graphicsEngine.bvhNodesSsbo.unwrap());
-			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, graphicsEngine.bvhLeafNodesSsbo.unwrap());
+			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 0, self.bvhNodesSsbo.unwrap());
+			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, self.bvhLeafNodesSsbo.unwrap());
 		}
 
 
@@ -452,7 +439,7 @@ pub fn openglMain(
 
 
 		unsafe {
-		    gl::BindVertexArray(graphicsEngine.vao.unwrap());
+		    gl::BindVertexArray(self.vao.unwrap());
 		    gl::DrawArrays(
 		        gl::TRIANGLES, // mode
 		        0, // starting index in the enabled arrays
@@ -460,11 +447,12 @@ pub fn openglMain(
 		    );
 		}
 
-		graphicsEngine.window.gl_swap_window();
+		self.window.gl_swap_window();
 
-		fpsMeasure.tick();
-    }
+		self.fpsMeasure.tick();
+	}
 }
+
 
 
 

@@ -1656,25 +1656,43 @@ pub fn main() {
 
 
 
-    let mut bvhLeafNodes: Vec<opengl::BvhLeafNode> = Vec::new();
+    
 
-    // add BVH leaf for testing
-    bvhLeafNodes.push(opengl::BvhLeafNode {
-        nodeType: 0, // 0 is sphere
 
-        vertex0: Vector4::<f64>::new(0.0, 0.0, 10.0, 1.0), // position and radius
-        vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
-        vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
-    }); 
 
-    // call into openGL-main
-    // TODO< dissect this main and do it here >
-    opengl::openglMain(
-        &Vec::new(), // bvhNodes
-        0, // bvhRootNodeIdx
 
-        &bvhLeafNodes // BvhLeafNodes
-    );
+    let mut graphicsEngine = opengl::makeGraphicsEngine().unwrap();
+    
+    graphicsEngine.initAndAlloc();
+    
+
+    'main: loop {
+        for event in graphicsEngine.eventPump.poll_iter() {
+            match event {
+                sdl2::event::Event::Quit {..} => break 'main,
+                _ => {},
+            }
+        }
+
+
+            
+        let mut bvhNodes: Vec<opengl::BvhNode> = Vec::new();
+
+        let mut bvhLeafNodes: Vec<opengl::BvhLeafNode> = Vec::new();
+
+        // add BVH leaf for testing
+        bvhLeafNodes.push(opengl::BvhLeafNode {
+            nodeType: 0, // 0 is sphere
+
+            vertex0: Vector4::<f64>::new(0.0, 0.0, 10.0, 1.0), // position and radius
+            vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
+            vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
+        }); 
+
+        let mut bvhRootNodeIdx = 0;
+
+        graphicsEngine.frame(&bvhNodes, bvhRootNodeIdx, &bvhLeafNodes);
+    }
 }
 
 #[derive(PartialEq)]
