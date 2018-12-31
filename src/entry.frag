@@ -3,13 +3,14 @@
 
 // TODO< use array of lights for shading >
 
+// TODO< camera model with up vector >
+
+// TODO< put camera into global SSAO >
+
 
 
 
 // TODO< uniform parameter for screen ratio >
-
-// TODO< add capped cone as primitive >
-
 
 
 // TODO< textures for storing of BVH information - textures should be faster than SSBO's >
@@ -995,9 +996,10 @@ struct Material {
     // 0 : lambertian
     int type;
 
+    // reflectance of fresnel
+    float fresnelReflectance;
     int padding0;
     int padding1;
-    int padding2;
 
     vec4 baseColor;
 };
@@ -1134,7 +1136,7 @@ vec3 traceEyeRay(vec3 rayOrigin, vec3 dir, int remainingReflections) {
         }
 
 
-        float rs = 0.1;
+        float rs = material.fresnelReflectance;
         float cosTheta = dot(hitRecord0.n, -dir);
         float fresnelReflectance = shading_schlickFresnel(rs, cosTheta);
 

@@ -1758,11 +1758,13 @@ pub fn main() {
 
         materials.push(opengl::Material{
             type_: 0, // lambertian
+            fresnelReflectance: 0.1,
             baseColor: Vector3::<f32>::new(1.0, 0.01, 0.01),
         });
 
         materials.push(opengl::Material{
             type_: 0, // lambertian
+            fresnelReflectance: 0.1,
             baseColor: Vector3::<f32>::new(0.1, 0.1, 0.1),
         });
 

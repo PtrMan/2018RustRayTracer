@@ -54,15 +54,16 @@ pub struct BvhLeafNode {
 #[repr(C)]
 struct GlslMaterial {
 	pub type_: i32,
+	pub fresnelReflectance: f32,
 	pub padding0: i32,
     pub padding1: i32,
-    pub padding2: i32,
 
     pub baseColor: [f32; 4],
 }
 
 pub struct Material {
 	pub type_: i32,
+	pub fresnelReflectance: f32,
 	pub baseColor: Vector3<f32>,
 }
 
@@ -456,9 +457,9 @@ impl GraphicsEngine {
 			for iMaterial in materials {
 				glslMaterials.push(GlslMaterial{
 					type_: iMaterial.type_,
+					fresnelReflectance: iMaterial.fresnelReflectance,
 					padding0: 0,
 					padding1: 0,
-					padding2: 0,
 
 					baseColor: [iMaterial.baseColor.x as f32, iMaterial.baseColor.y as f32, iMaterial.baseColor.z as f32, 1.0],
 				});
