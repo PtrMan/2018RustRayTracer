@@ -1007,13 +1007,18 @@ layout (std430, binding=2) buffer materialsBuffer {
 };
 
 // shading function - computes the shading of a material lit by a light
-vec3 shadeSurface(vec3 lightDir, vec3 n, float lightIntensity, Material material) {
+vec3 shadeSurface(vec3 lightDir, vec3 n, vec3 lightIntensity, Material material) {
     if (material.type == 0) { // lambertian
         // diffuse shading of implicit surface
         float diffuse = dot(lightDir, n);
         diffuse = max(0.0, diffuse);
         
-        return material.baseColor * (diffuse * lightIntensity);
+        vec3 resultShading = material.baseColor.rgb;
+        resultShading.r *= lightIntensity.r;
+        resultShading.g *= lightIntensity.g;
+        resultShading.b *= lightIntensity.b;
+
+        return resultShading * diffuse;
     }
 
     return vec3(0.0);
@@ -1059,13 +1064,20 @@ vec3 traceEyeRay(vec3 rayOrigin, vec3 dir, int remainingReflections) {
     bvhCheckAgainstLeafs(rayOrigin, dir, /*inout*/hitRecord0);
 
     if (hitRecord0.hit) {
+        // set test light HARDCODED for TESTING
+        PointLight pointLight;
+        pointLight.position = vec4(2.0, 0.0, 0.0, 1.0);
+        pointLight.colorIntensity = vec4(1.0, 0.0, 0.0, 1.0); // color * intensity
+
+        // bit 0 - enable shadows
+        pointLight.flags = 1;
+
+
         // compute primitive shading
 
         vec3 hitPosition = rayOrigin + dir * hitRecord0.t;
 
-        vec3 lightPosition = vec3(2.0, 0.0, 0.0); // HARDCODED FOR TESTING
-
-        vec3 lightDir = lightPosition - hitPosition;
+        vec3 lightDir = pointLight.position.xyz - hitPosition;
         float distanceToLight = length(lightDir);
         lightDir = normalize(lightDir); // direction to light (normalized)
 
@@ -1073,8 +1085,11 @@ vec3 traceEyeRay(vec3 rayOrigin, vec3 dir, int remainingReflections) {
         // TODO< falloff with distance >
         float lightIntensity = 1.0; // intensity of light
 
+        // TODO< test maximal distance >
+
         // shoot shadow ray
-        if (traceShadowRay(hitPosition + hitRecord0.n * 0.05, lightDir, distanceToLight)) {
+        bool shadowRaysEnabled = (pointLight.flags & 1) != 0;
+        if (shadowRaysEnabled && traceShadowRay(hitPosition + hitRecord0.n * 0.05, lightDir, distanceToLight)) {
             lightIntensity = 0.0;
         }
 
@@ -1083,7 +1098,7 @@ vec3 traceEyeRay(vec3 rayOrigin, vec3 dir, int remainingReflections) {
 
         vec3 shadingColor = vec3(0.0); // resulting color
 
-        shadingColor += shadeSurface(lightDir, hitRecord0.n, lightIntensity, material);
+        shadingColor += shadeSurface(lightDir, hitRecord0.n, pointLight.colorIntensity.rgb * lightIntensity, material);
 
 
         // compute reflection
@@ -1107,7 +1122,7 @@ vec3 traceEyeRay(vec3 rayOrigin, vec3 dir, int remainingReflections) {
                 vec3 lightDir = vec3(0.0, 0.0, -1.0); // direction to light (normalized)
                 
                 // TODO< falloff with distance >
-                float lightIntensity = 1.0; // intensity of light
+                vec3 lightIntensity = vec3(1.0); // intensity of light
 
                 // fetch material from SSBO
                 Material material1 = materials[hitRecord1.surfaceMaterialIdx];
