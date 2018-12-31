@@ -1387,7 +1387,13 @@ void main() {
     float screenRatio = 700.0 / 900.0; // from pixel to ratio
     mainImage2(color2, uv, screenRatio);
 
-    Color = vec4(color2.xyz, 1.0f);
-    //Color = vec4(uv, 0.0, 1.0);
-    //Color = ourColor;
+    // gamma correction
+    float gamma = 2.2;
+    vec4 gammaCorrectedColor;
+    gammaCorrectedColor.r = pow(color2.r, 1.0/gamma);
+    gammaCorrectedColor.g = pow(color2.g, 1.0/gamma);
+    gammaCorrectedColor.b = pow(color2.b, 1.0/gamma);
+    gammaCorrectedColor.w = 1.0;
+
+    Color = gammaCorrectedColor;
 }
