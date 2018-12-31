@@ -1,6 +1,11 @@
 // License: MIT
 
 
+// TODO< use array of lights for shading >
+
+
+
+
 // TODO< uniform parameter for screen ratio >
 
 // TODO< add capped cone as primitive >
@@ -610,7 +615,9 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
     vec4 vertex1_4 = bvhLeafNodes[leafNodeIdx].vertex1;
     vec4 vertex2_4 = bvhLeafNodes[leafNodeIdx].vertex2;
 
-    if (bvhLeafNodes[leafNodeIdx].nodeType == 0) { // sphere
+    int nodeType = bvhLeafNodes[leafNodeIdx].nodeType;
+
+    if (nodeType == 0) { // sphere
         vec4 positionAndRadius = vertex0_4;
 
         // shoot ray aganst sphere
@@ -634,7 +641,7 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
             }
         }
     }
-    else if (bvhLeafNodes[leafNodeIdx].nodeType == 1) { // polygon
+    else if (nodeType == 1) { // polygon
         vec3 vertex0 = vertex0_4.xyz; 
         vec3 vertex1 = vertex1_4.xyz;
         vec3 vertex2 = vertex2_4.xyz;
@@ -666,7 +673,7 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
             }
         }
     }
-    else if (bvhLeafNodes[leafNodeIdx].nodeType == 2) { // capped cone
+    else if (nodeType == 2) { // capped cone
         
         vec4 resultTAndNormal = iCappedCone(
             ro, rd, 
@@ -694,10 +701,30 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
                 hitRecord.n = normalize(resultTAndNormal.yzw); // not necessary - already normalized
             }
         }
+    }
+    else if (nodeType == 3) { // implicit surface
+        float tIn = 0.0; // t where the ray got into the AABB which encapsulates the implicit surface
+        float tOut = 1.0e20; // t where the ray out of the AABB which encapsulates the implicit surface
+
+        /* commented because work in progress
+        vec3 aabbCenter = TODO;
+        vec3 aabbExtend = TODO;
+
+        // TODO< check if ray origin is inside the AABB >
+
+        mat4 mat;
+        mat = translate(aabbCenter); // negate because we move the ray origin
+        
+        float tIn = sBox(ro, rd, mat, aabbExtend);
+
+        bool aabbHit = tIn >= 0.0;
+        if (!aabbHit) {
+            return;
+        }*/
 
 
 
-
+        // ray marching
     }
 }
 
@@ -845,6 +872,21 @@ vec3 shadeSurface(vec3 lightDir, vec3 n, float lightIntensity, Material material
 }
             
 
+
+
+
+
+struct PointLight {
+    vec4 position; // w is unused
+    vec4 colorIntensity; // color * intensity
+
+    // bit 0 - enable shadows
+    int flags;
+
+    float maxDistance; // max distance to render/contribute, must be >= 0.0
+    int padding0;
+    int padding1;
+};
 
 
 

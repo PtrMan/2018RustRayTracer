@@ -1688,8 +1688,8 @@ pub fn main() {
             nodeType: 2, // 2 is capped cone
             materialIdx: 0,
 
-            vertex0: Vector4::<f64>::new(0.0, 0.0, 7.0, 1.5), // position and radius
-            vertex1: Vector4::<f64>::new(0.01, 3.01, 7.01, 1.503), // position and radius - must be uneven because of precision issues on GPU
+            vertex0: Vector4::<f64>::new(2.0, 0.0, 10.0, 1.5), // position and radius
+            vertex1: Vector4::<f64>::new(2.01, 3.01, 10.01, 1.503), // position and radius - must be uneven because of precision issues on GPU
             vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
         });
 
@@ -1699,7 +1699,7 @@ pub fn main() {
             nodeType: 0, // 0 is sphere
             materialIdx: 0,
 
-            vertex0: Vector4::<f64>::new(0.0, 0.0, 7.0, 1.5), // position and radius
+            vertex0: Vector4::<f64>::new(2.0, 0.0, 10.0, 1.5), // position and radius
             vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
             vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
         });
@@ -1708,7 +1708,17 @@ pub fn main() {
             nodeType: 0, // 0 is sphere
             materialIdx: 0,
 
-            vertex0: Vector4::<f64>::new(0.0, 3.0, 7.0, 1.5), // position and radius
+            vertex0: Vector4::<f64>::new(2.0, 3.0, 10.0, 1.5), // position and radius
+            vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
+            vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
+        });
+
+        // back plane
+        bvhLeafNodes.push(opengl::BvhLeafNode {
+            nodeType: 0, // 0 is sphere
+            materialIdx: 0,
+
+            vertex0: Vector4::<f64>::new(0.0, 0.0, 16.0+1000.0, 1000.0), // position and radius
             vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
             vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
         });
@@ -1718,7 +1728,7 @@ pub fn main() {
 
             let mut positionDelta = Vec3::new(phase.cos(), 0.0, phase.sin());
             positionDelta = positionDelta.scale(3.0);
-            let mut position = &Vec3::new(0.0, 0.0, 7.0) + &positionDelta;
+            let mut position = &Vec3::new(2.0, 0.0, 10.0) + &positionDelta;
 
             bvhLeafNodes.push(opengl::BvhLeafNode {
                 nodeType: 0, // 0 is sphere
