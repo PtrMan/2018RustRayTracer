@@ -1,7 +1,6 @@
 // License: MIT
 
 
-// TODO< fresnel >
 // TODO< uniform parameter for screen ratio >
 
 // TODO< add capped cone as primitive >
@@ -849,9 +848,96 @@ vec3 shadeSurface(vec3 lightDir, vec3 n, float lightIntensity, Material material
 
 
 
+// /param maxT maximal t value of the ray (typical the distance to the light source)
+bool traceShadowRay(vec3 rayOrigin, vec3 dir, float maxT) {
+    BvhHitRecord hitRecord; // used to store the hit
+        
+    bvhCheckAgainstLeafs(rayOrigin, dir, /*inout*/hitRecord);
+
+    if (!hitRecord.hit) {
+        return false; // shadow ray didn't hit anything if there was no hit
+    }
+
+    return hitRecord.t <= maxT;
+}
+
+// trace eye ray in scene
+//
+vec3 traceEyeRay(vec3 rayOrigin, vec3 dir, int remainingReflections) {
+    BvhHitRecord hitRecord0; // used to store the hit
+        
+    bvhCheckAgainstLeafs(rayOrigin, dir, /*inout*/hitRecord0);
+
+    if (hitRecord0.hit) {
+        // compute primitive shading
+
+        vec3 hitPosition = rayOrigin + dir * hitRecord0.t;
+
+        vec3 lightPosition = vec3(2.0, 0.0, 0.0); // HARDCODED FOR TESTING
+
+        vec3 lightDir = lightPosition - hitPosition;
+        float distanceToLight = length(lightDir);
+        lightDir = normalize(lightDir); // direction to light (normalized)
+
+        
+        // TODO< falloff with distance >
+        float lightIntensity = 1.0; // intensity of light
+
+        // shoot shadow ray
+        if (traceShadowRay(hitPosition + hitRecord0.n * 0.05, lightDir, distanceToLight)) {
+            lightIntensity = 0.0;
+        }
+
+        // fetch material from SSBO
+        Material material = materials[hitRecord0.surfaceMaterialIdx];
+
+        vec3 shadingColor = vec3(0.0); // resulting color
+
+        shadingColor += shadeSurface(lightDir, hitRecord0.n, lightIntensity, material);
 
 
+        // compute reflection
+        vec3 reflectedColor = vec3(0.0);
 
+        {
+            
+
+            vec3 rayOrigin1 = hitPosition + hitRecord0.n * 0.05; // mve origin a bit above the surface
+
+            vec3 dir1; // reflected direction
+            // compute reflected direction
+            dir1 = reflect(dir, hitRecord0.n);
+
+            BvhHitRecord hitRecord1; // used to store the hit
+            bvhCheckAgainstLeafs(rayOrigin1, dir1, /*inout*/hitRecord1);
+
+            if (hitRecord1.hit) {
+                // compute primitive shading
+
+                vec3 lightDir = vec3(0.0, 0.0, -1.0); // direction to light (normalized)
+                
+                // TODO< falloff with distance >
+                float lightIntensity = 1.0; // intensity of light
+
+                // fetch material from SSBO
+                Material material1 = materials[hitRecord1.surfaceMaterialIdx];
+
+                vec3 shadingColor = vec3(0.0); // resulting color
+
+                reflectedColor += shadeSurface(lightDir, hitRecord1.n, lightIntensity, material1);
+            }
+        }
+
+
+        float rs = 0.1;
+        float cosTheta = dot(hitRecord0.n, -dir);
+        float fresnelReflectance = shading_schlickFresnel(rs, cosTheta);
+
+        return shadingColor * (1.0 - fresnelReflectance) + reflectedColor * fresnelReflectance;
+    }
+
+    return vec3(0.0);
+}
 
 
 
@@ -1063,71 +1149,8 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
     {
         vec3 rayOrigin = cameraPos;
 
-        BvhHitRecord hitRecord0; // used to store the hit
-        //hitRecord0.hit = false;
-        //hitRecord0.t = -1.0;
-        //hitRecord0.bvhHits = 0;
-
-        //int leafNodeIdx = 0; // we just want to shoot the ray against BVH leaf node 0
-        //bvhProcessLeafHit(rayOrigin, dir, leafNodeIdx, /*inout*/hitRecord0);
-
-        bvhCheckAgainstLeafs(rayOrigin, dir, /*inout*/hitRecord0);
-
-        if (hitRecord0.hit) {
-            // compute primitive shading
-
-            vec3 lightDir = vec3(0.0, 0.0, -1.0); // direction to light (normalized)
-            
-            // TODO< falloff with distance >
-            float lightIntensity = 1.0; // intensity of light
-
-            // fetch material from SSBO
-            Material material = materials[hitRecord0.surfaceMaterialIdx];
-
-            vec3 shadingColor = vec3(0.0); // resulting color
-
-            shadingColor += shadeSurface(lightDir, hitRecord0.n, lightIntensity, material);
-
-
-            // compute reflection
-            vec3 reflectedColor = vec3(0.0);
-
-            {
-                vec3 hitPosition = rayOrigin + dir * hitRecord0.t;
-
-                vec3 rayOrigin1 = hitPosition + hitRecord0.n * 0.05; // mve origin a bit above the surface
-
-                vec3 dir1; // reflected direction
-                // compute reflected direction
-                dir1 = reflect(dir, hitRecord0.n);
-
-                BvhHitRecord hitRecord1; // used to store the hit
-                bvhCheckAgainstLeafs(rayOrigin1, dir1, /*inout*/hitRecord1);
-
-                if (hitRecord1.hit) {
-                    // compute primitive shading
-
-                    vec3 lightDir = vec3(0.0, 0.0, -1.0); // direction to light (normalized)
-                    
-                    // TODO< falloff with distance >
-                    float lightIntensity = 1.0; // intensity of light
-
-                    // fetch material from SSBO
-                    Material material1 = materials[hitRecord1.surfaceMaterialIdx];
-
-                    vec3 shadingColor = vec3(0.0); // resulting color
-
-                    reflectedColor += shadeSurface(lightDir, hitRecord1.n, lightIntensity, material1);
-                }
-            }
-
-
-            float rs = 0.1;
-            float cosTheta = dot(hitRecord0.n, -dir);
-            float fresnelReflectance = shading_schlickFresnel(rs, cosTheta);
-
-            col = shadingColor * (1.0 - fresnelReflectance) + reflectedColor * fresnelReflectance;
-        }
+        int remainingReflections = 1;
+        col = traceEyeRay(rayOrigin, dir, remainingReflections);
     }
 #endif
 
