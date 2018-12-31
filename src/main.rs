@@ -1722,6 +1722,16 @@ pub fn main() {
             vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
             vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
         });
+
+        // implicit surface
+        bvhLeafNodes.push(opengl::BvhLeafNode {
+            nodeType: 3, // 3 is implicit surface
+            materialIdx: 0,
+
+            vertex0: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0), // not used because we are testing
+            vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
+            vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
+        });
         
         for i in 0..10 {
             let phase = t * 0.3 + (i as f64) * 0.7;
