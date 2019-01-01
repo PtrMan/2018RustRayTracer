@@ -181,10 +181,10 @@ vec4 iCappedCone( in vec3  ro, in vec3  rd,
     float ocba = dot(oc,ba);
     float ocrd = dot(oc,rd);
     float ococ = dot(oc,oc);
-    
-    float k2 = baba*baba      - hy*rdba*rdba; // the gap is rdrd which is 1.0
-    float k1 = baba*baba*ocrd - hy*rdba*ocba;
-    float k0 = baba*baba*ococ - hy*ocba*ocba;
+
+    float k2 = -hy*rdba*rdba + baba*baba; // the gap is rdrd which is 1.0
+    float k1 = -hy*rdba*ocba + baba*baba*ocrd;
+    float k0 = -hy*ocba*ocba + baba*baba*ococ;
 
     float h = k1*k1 - k2*k0;
     if( h<0.0 ) return vec4(-1.0);
