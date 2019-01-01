@@ -380,9 +380,14 @@ float distanceFn0(vec3 p, N descriptor) {
 
 
     float d0 = sdBox(p - d.vecs[0].xyz, vec3(0.4, 0.2, 0.2));
-    d0 -= 0.2; // add thickness
+    
+    float d1 = sdBox(p - d.vecs[2].xyz, vec3(0.8, 0.8, 0.8));
+    
+    float d2 = min(d0, d1); // union
 
-    return d0;
+    d2 -= 0.2; // add thickness
+
+    return d2;
 }
 
 
@@ -820,6 +825,7 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
         N shapeDescriptor;
         shapeDescriptor.vecs[0] = vec4(3.0, 0.0, 5.0, 1.0); // position of sphere [0]
         shapeDescriptor.vecs[1] = vec4(3.5, 0.0, 5.0, 1.0); // position of sphere [1]
+        shapeDescriptor.vecs[2] = vec4(3.5, 0.0, 6.0, 1.0); // position of cube [2]
 
 
         int stepI;
