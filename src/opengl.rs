@@ -82,6 +82,12 @@ struct GlslPointLight {
 }
 
 
+pub struct Camera {
+	pub position: Vector3<f32>,
+	pub dir: Vector3<f32>,
+	pub up: Vector3<f32>,
+}
+
 
 extern crate sdl2;
 
@@ -368,7 +374,9 @@ impl GraphicsEngine {
 
 		bvhLeafNodes: &Vec<BvhLeafNode>,
 
-		materials: &Vec<Material>
+		materials: &Vec<Material>,
+
+		camera: &Camera
 	) {
 
         use std::ffi::CString;
@@ -382,7 +390,9 @@ impl GraphicsEngine {
 	    	gl::Clear(gl::COLOR_BUFFER_BIT);
 		}
 
-
+		let mut uniformLocationCameraPosition = 0;
+		let mut uniformLocationCameraDir = 0;
+		let mut uniformLocationCameraUp = 0;
 
 		let mut uniformLocationVertexColor = 0;
 		let mut uniformLocationBvhRootNodeIdx = 0;
@@ -404,6 +414,21 @@ impl GraphicsEngine {
 				unsafe {
 					let uniformName = &CString::new("bvhLeafNodesCount").unwrap();
 					uniformLocationBvhLeafNodesCount = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+				}
+
+				unsafe {
+					let uniformName = &CString::new("cameraPosition").unwrap();
+					uniformLocationCameraPosition = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+				}
+
+				unsafe {
+					let uniformName = &CString::new("cameraDir").unwrap();
+					uniformLocationCameraDir = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
+				}
+
+				unsafe {
+					let uniformName = &CString::new("cameraUp").unwrap();
+					uniformLocationCameraUp = gl::GetUniformLocation(shaderProgram.retId(), uniformName.as_ptr());
 				}
         	}
         	None => {}
@@ -596,6 +621,35 @@ impl GraphicsEngine {
 			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
 			gl::Uniform4fv(uniformLocationVertexColor, (uniformVector.len() as i32)/4, ptr);
 		}
+
+
+		unsafe {
+			let uniformVector:Vec<f32> = vec![
+				camera.position.x, camera.position.y, camera.position.z, 1.0
+			];
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
+			gl::Uniform4fv(uniformLocationCameraPosition, (uniformVector.len() as i32)/4, ptr);
+		}
+
+		unsafe {
+			let uniformVector:Vec<f32> = vec![
+				camera.dir.x, camera.dir.y, camera.dir.z, 1.0
+			];
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
+			gl::Uniform4fv(uniformLocationCameraDir, (uniformVector.len() as i32)/4, ptr);
+		}
+
+		unsafe {
+			let uniformVector:Vec<f32> = vec![
+				camera.up.x, camera.up.y, camera.up.z, 1.0
+			];
+			let ptr = uniformVector.as_ptr() as *const gl::types::GLfloat;
+			gl::Uniform4fv(uniformLocationCameraUp, (uniformVector.len() as i32)/4, ptr);
+		}
+
+
+
+
 
 
 

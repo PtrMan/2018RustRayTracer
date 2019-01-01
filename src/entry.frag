@@ -1173,6 +1173,10 @@ vec3 traceEyeRay(vec3 rayOrigin, vec3 dir, int remainingReflections) {
 
 
 
+uniform vec4 cameraPosition;
+uniform vec4 cameraDir;
+uniform vec4 cameraUp;
+
 
 
 // do we want to test/render the rendering of simple volumetrics?
@@ -1204,8 +1208,10 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
     float radius0 = 0.3;
     float radius1 = 0.25;
     
+    vec3 cameraPos = cameraPosition.xyz;
+    // TODO< compute real ray-dir by cameradir and up vector of camera >
     vec3 dir = normalize(vec3(uv11,1.0));
-    vec3 cameraPos = vec3(0.0,1.0,0.0);
+    
     
 
 #if 0

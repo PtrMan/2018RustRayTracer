@@ -1768,7 +1768,20 @@ pub fn main() {
             baseColor: Vector3::<f32>::new(0.1, 0.1, 0.1),
         });
 
-        graphicsEngine.frame(&bvhNodes, bvhRootNodeIdx, &bvhLeafNodes, &materials);
+        let camera: opengl::Camera;
+        {
+            let phase = t * 0.2;
+
+            camera = opengl::Camera{
+                position: Vector3::<f32>::new((phase.cos() * 10.0) as f32, 3.0f32, (phase.sin() * 10.0) as f32),
+                dir: Vector3::<f32>::new(0.0f32, 0.0f32, 1.0f32), // must be normalized
+                up: Vector3::<f32>::new(0.0f32, 1.0f32, 0.0f32) // must be normalized
+            }
+        }
+
+
+
+        graphicsEngine.frame(&bvhNodes, bvhRootNodeIdx, &bvhLeafNodes, &materials, &camera);
 
         t += (1.0 / 60.0);
     }
