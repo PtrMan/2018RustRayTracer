@@ -1058,6 +1058,9 @@ struct PointLight {
     int padding1;
 };
 
+layout (std430, binding=3) buffer pointLightsBuffer {
+    PointLight pointLights[];
+};
 
 
 // /param maxT maximal t value of the ray (typical the distance to the light source)
@@ -1081,41 +1084,41 @@ vec3 traceEyeRay(vec3 rayOrigin, vec3 dir, int remainingReflections) {
     bvhCheckAgainstLeafs(rayOrigin, dir, /*inout*/hitRecord0);
 
     if (hitRecord0.hit) {
-        // set test light HARDCODED for TESTING
-        PointLight pointLight;
-        pointLight.position = vec4(2.0, 0.0, 0.0, 1.0);
-        pointLight.colorIntensity = vec4(1.0, 0.0, 0.0, 1.0); // color * intensity
-
-        // bit 0 - enable shadows
-        pointLight.flags = 1;
-
-
-        // compute primitive shading
+        vec3 shadingColor = vec3(0.0); // resulting color
 
         vec3 hitPosition = rayOrigin + dir * hitRecord0.t;
 
-        vec3 lightDir = pointLight.position.xyz - hitPosition;
-        float distanceToLight = length(lightDir);
-        lightDir = normalize(lightDir); // direction to light (normalized)
-
         
-        // TODO< falloff with distance >
-        float lightIntensity = 1.0; // intensity of light
-
-        // TODO< test maximal distance >
-
-        // shoot shadow ray
-        bool shadowRaysEnabled = (pointLight.flags & 1) != 0;
-        if (shadowRaysEnabled && traceShadowRay(hitPosition + hitRecord0.n * 0.05, lightDir, distanceToLight)) {
-            lightIntensity = 0.0;
-        }
-
         // fetch material from SSBO
         Material material = materials[hitRecord0.surfaceMaterialIdx];
 
-        vec3 shadingColor = vec3(0.0); // resulting color
+        // compute shading from light sources
+        int pointLightsCount = 2;
+        int iPointLightIdx;
+        for (iPointLightIdx=0; iPointLightIdx< pointLightsCount; iPointLightIdx++) {
+            PointLight iPointLight = pointLights[iPointLightIdx];
 
-        shadingColor += shadeSurface(lightDir, hitRecord0.n, pointLight.colorIntensity.rgb * lightIntensity, material);
+            vec3 lightDir = iPointLight.position.xyz - hitPosition;
+            float distanceToLight = length(lightDir);
+            lightDir = normalize(lightDir); // direction to light (normalized)
+
+            
+            // TODO< falloff with distance >
+            float lightIntensity = 1.0; // intensity of light
+
+            // TODO< test maximal distance >
+
+            // shoot shadow ray
+            bool shadowRaysEnabled = (iPointLight.flags & 1) != 0;
+            if (shadowRaysEnabled && traceShadowRay(hitPosition + hitRecord0.n * 0.05, lightDir, distanceToLight)) {
+                lightIntensity = 0.0;
+            }
+
+
+
+            shadingColor += shadeSurface(lightDir, hitRecord0.n, iPointLight.colorIntensity.rgb * lightIntensity, material);
+        }
+
 
 
         // compute reflection

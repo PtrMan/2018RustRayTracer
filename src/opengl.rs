@@ -68,6 +68,21 @@ pub struct Material {
 }
 
 
+#[repr(C)]
+struct GlslPointLight {
+	pub position: [f32; 4],
+    pub colorIntensity: [f32; 4], // color * intensity
+
+    // bit 0 - enable shadows
+    pub flags: i32,
+
+    pub maxDistance: f32,
+    pub padding0: i32,
+    pub padding1: i32,
+}
+
+
+
 extern crate sdl2;
 
 use nalgebra::{U4, Matrix, MatrixArray, Vector4, Vector3};
@@ -100,6 +115,7 @@ pub struct GraphicsEngine {
 	pub bvhNodesSsbo: Option<gl::types::GLuint>,
 	pub bvhLeafNodesSsbo: Option<gl::types::GLuint>,
 	pub materialsSsbo: Option<gl::types::GLuint>,
+	pub pointLightsSsbo: Option<gl::types::GLuint>,
 }
 
 pub fn makeGraphicsEngine() -> Result<GraphicsEngine,String> {
@@ -162,6 +178,7 @@ pub fn makeGraphicsEngine() -> Result<GraphicsEngine,String> {
 		bvhNodesSsbo: None,
 		bvhLeafNodesSsbo: None,
 		materialsSsbo: None,
+		pointLightsSsbo: None,
 	})
 }
 
@@ -244,6 +261,22 @@ impl GraphicsEngine {
 			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, materialsSsbo);
 			gl::BufferData(gl::SHADER_STORAGE_BUFFER, (mem::size_of::<GlslMaterial>() * maxNumberOfElements) as isize, 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
 			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 2, materialsSsbo); // because it is at location 2
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
+		}
+
+		unsafe {
+			// TODO< make ssbo attribute of shaderprogram and add a drop trait for it >
+			let mut pointLightsSsbo: gl::types::GLuint = 0;
+
+			use std::mem;
+
+			let maxNumberOfElements = 1 << 5;
+
+			gl::GenBuffers(1, &mut pointLightsSsbo);
+			self.pointLightsSsbo = Some(pointLightsSsbo);
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, pointLightsSsbo);
+			gl::BufferData(gl::SHADER_STORAGE_BUFFER, (mem::size_of::<GlslPointLight>() * maxNumberOfElements) as isize, 0 /* we pass NULL because we just want to declare the upload type */ as *const std::ffi::c_void, gl::DYNAMIC_COPY);
+			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 3, pointLightsSsbo); // because it is at location 2
 			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
 		}
 
@@ -477,6 +510,49 @@ impl GraphicsEngine {
 		}
 
 
+
+		// update SSBO
+		unsafe {
+			let mut glslPointLights: Vec<GlslPointLight> = Vec::new();
+
+			// translate data to GLSL format
+			// TODO< take from Vec and translate >
+			{
+				glslPointLights.push(GlslPointLight{
+					position: [2.0, 0.0, 0.0, 1.0],
+    				colorIntensity: [0.8, 0.8, 0.8, 1.0], // color * intensity
+
+    				flags: 1, // enable shadows
+
+			    	maxDistance: 512.0,
+			    	padding0: 0,
+			    	padding1: 0,
+				});
+
+				glslPointLights.push(GlslPointLight{
+					position: [-5.0, 0.0, 3.0, 1.0],
+    				colorIntensity: [0.1, 0.1, 0.6, 1.0], // color * intensity
+
+    				flags: 1, // enable shadows
+
+			    	maxDistance: 512.0,
+			    	padding0: 0,
+			    	padding1: 0,
+				});
+			}
+
+			// copy the data to the SSBO
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, self.pointLightsSsbo.unwrap());
+			gl::BufferSubData(
+				gl::SHADER_STORAGE_BUFFER,
+				0,
+				(std::mem::size_of::<GlslPointLight>() * glslPointLights.len()) as isize,
+				glslPointLights.as_mut_ptr() as *const std::ffi::c_void
+			);
+			gl::BindBuffer(gl::SHADER_STORAGE_BUFFER, 0); // unbind
+		}
+
+
 		/* commented because this is wrong/not necessary
 		unsafe {
 			// * get block index
@@ -500,6 +576,7 @@ impl GraphicsEngine {
 			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 0, self.bvhNodesSsbo.unwrap());
 			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 1, self.bvhLeafNodesSsbo.unwrap());
 			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 2, self.materialsSsbo.unwrap());
+			gl::BindBufferBase(gl::SHADER_STORAGE_BUFFER, 3, self.pointLightsSsbo.unwrap());
 		}
 
 
