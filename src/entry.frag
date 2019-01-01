@@ -1,15 +1,11 @@
 // License: MIT
 
 
-// TODO< use array of lights for shading >
+// TODO< pass size of array of lights as uniform for true dynamic lighting >
 
 // TODO< camera model with up vector >
 
 // TODO< put camera into global SSAO >
-
-
-
-
 // TODO< uniform parameter for screen ratio >
 
 
@@ -85,8 +81,8 @@ vec4 iBox( in vec3 ro, in vec3 rd, in mat4 txx, in mat4 txi, in vec3 rad ) {
     return vec4( tN, nor );
 }
 
-
-float sBox( in vec3 ro, in vec3 rd, in mat4 txx, in vec3 rad ) {    
+// /param checkFirstIntersection do we just take the first intersection into account
+float sBox( in vec3 ro, in vec3 rd, in mat4 txx, in vec3 rad, bool checkFirstIntersection) {    
     // The MIT License
     // Copyright © 2014 Inigo Quilez
     // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -106,7 +102,7 @@ float sBox( in vec3 ro, in vec3 rd, in mat4 txx, in vec3 rad ) {
 
     float tN = max( max( t1.x, t1.y ), t1.z );
     float tF = min( min( t2.x, t2.y ), t2.z );
-    if( tN > tF || tF < 0.0) return -1.0;
+    if( checkFirstIntersection && (tN > tF || tF < 0.0)) return -1.0;
     
     return tN;
 }
@@ -800,12 +796,15 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
             mat4 mat;
             mat = translate(-aabbCenter); // negate because we move the ray origin
             
-            tIn = sBox(ro, rd, mat, aabbExtend);
+            tIn = sBox(ro, rd, mat, aabbExtend, true);
 
             bool aabbHit = tIn >= 0.0;
             if (!aabbHit) {
                 return;
             }
+
+            // compute out 
+            tOut = -sBox(ro, -rd, mat, aabbExtend, false);
         }
 
 
@@ -838,9 +837,8 @@ void bvhProcessLeafHit(vec3 ro, vec3 rd, int leafNodeIdx, inout BvhHitRecord hit
                 break;
             }
 
-            if (traveledDistanceInImplicit > 10.0) {
+            if(t > tOut) {
                 // we can't hit the object anymore
-                // TODO< get maximal t from AABB and compare with it >
                 break;
             }
 
@@ -948,7 +946,7 @@ BvhHitRecord bvhTraverse(in vec3 ro, in vec3 rd) {
 
         mat4 mat;
         mat = translate(-currentBvhNode.aabbCenter); // negate because we move the ray origin
-        bool aabbHit = sBox(ro, rd, mat, currentBvhNode.aabbExtend) >= 0.0;
+        bool aabbHit = sBox(ro, rd, mat, currentBvhNode.aabbExtend, true) >= 0.0;
         
         
         bool insideAabb = testInsideAabb(ro, currentBvhNode.aabbCenter, currentBvhNode.aabbExtend);
@@ -1088,7 +1086,7 @@ vec3 traceEyeRay(vec3 rayOrigin, vec3 dir, int remainingReflections) {
 
         vec3 hitPosition = rayOrigin + dir * hitRecord0.t;
 
-        
+
         // fetch material from SSBO
         Material material = materials[hitRecord0.surfaceMaterialIdx];
 
@@ -1342,7 +1340,7 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
         mat4 mat;
         mat = translate(-vec3(2.0,2.0,10.0));
         vec3 extend = vec3(1.0,1.0,1.0);
-        bool aabbHit = sBox(cameraPos, dir, mat, extend) >= 0.0;
+        bool aabbHit = sBox(cameraPos, dir, mat, extend, true) >= 0.0;
 
         if (aabbHit) {
             col = vec3(1.0, 1.0, 1.0);
