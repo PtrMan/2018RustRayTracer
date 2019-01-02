@@ -1860,9 +1860,11 @@ pub fn main() {
         {
             let phase = t * 0.2;
 
+            let cameraPosition = Vector3::<f32>::new((phase.cos() * 10.0) as f32, 3.0f32, (phase.sin() * 10.0) as f32);
+
             camera = opengl::Camera{
-                position: Vector3::<f32>::new((phase.cos() * 10.0) as f32, 3.0f32, (phase.sin() * 10.0) as f32),
-                dir: Vector3::<f32>::new(0.0f32, 0.0f32, 1.0f32), // must be normalized
+                position: cameraPosition,
+                dir: -cameraPosition.normalize(), // must be normalized
                 up: Vector3::<f32>::new(0.0f32, 1.0f32, 0.0f32) // must be normalized
             }
         }

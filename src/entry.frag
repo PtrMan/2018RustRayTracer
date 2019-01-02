@@ -1212,8 +1212,17 @@ void mainImage2(out vec4 fragColor, in vec2 uv, in float screenRatio) {
     float radius1 = 0.25;
     
     vec3 cameraPos = cameraPosition.xyz;
-    // TODO< compute real ray-dir by cameradir and up vector of camera >
-    vec3 dir = normalize(vec3(uv11,1.0));
+    
+    vec3 dir;
+    { // compute real ray direction by camera
+        vec3 side = normalize(cross(cameraUp.xyz, cameraDir.xyz)); // compute side vector
+
+        dir = cameraDir.xyz;
+        dir += (side * uv11.x);
+        dir += (cameraUp.xyz * uv11.y);
+
+        dir = normalize(dir);
+    }
     
     
 
