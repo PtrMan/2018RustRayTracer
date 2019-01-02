@@ -131,6 +131,9 @@ float iSphere(in vec3 ro, in vec3 rd, in vec4 sph) {
     return iSphere2(ro, rd, sph).x;
 }
 
+
+// ISSUE< precision is not enough for the case of a capped cylinder (on GPU) >
+
 // Intersection of a ray and a capped cone oriented in an arbitrary direction
 vec4 iCappedCone( in vec3  ro, in vec3  rd, 
                   in vec3  pa, in vec3  pb, 

@@ -1683,6 +1683,61 @@ pub fn main() {
 
         let mut materials: Vec<opengl::Material> = Vec::new();
 
+
+        // push mesh
+        {
+            let mut meshVertices = Vec::new();
+
+            let NORM3 = 0.57735026919;
+
+            meshVertices.push(Vec3::new(0.0, 0.0, -NORM3));
+            meshVertices.push(Vec3::new(NORM3, 0.0, NORM3));
+            meshVertices.push(Vec3::new(-NORM3, NORM3, NORM3));
+            meshVertices.push(Vec3::new(-NORM3, -NORM3, NORM3));
+
+            // TODO< store meshTraingleVertexIndices >
+            let mut meshVertexIndicesOfPolygons: Vec<[i64; 3]> = Vec::new();
+            meshVertexIndicesOfPolygons.push([1, 2, 3]); // bottom
+
+            // sides
+            meshVertexIndicesOfPolygons.push([1, 0, 2]);
+            meshVertexIndicesOfPolygons.push([2, 0, 3]);
+            meshVertexIndicesOfPolygons.push([3, 0, 1]);
+
+
+            let mut transformationMatrix = Matrix44::new_nonuniform_scaling(&Vector3::new(2.0, 2.0, 2.0));
+            transformationMatrix = transformationMatrix * Matrix44::from_euler_angles(0.0, (t as f64) * 0.3 , 0.0);
+
+
+            for iMeshVertexIndicesOfPoly in meshVertexIndicesOfPolygons {
+                let vertexIdx0 = iMeshVertexIndicesOfPoly[0];
+                let vertexIdx1 = iMeshVertexIndicesOfPoly[1];
+                let vertexIdx2 = iMeshVertexIndicesOfPoly[2];
+
+                let mut vertex0 = meshVertices[vertexIdx0 as usize].clone();
+                let mut vertex1 = meshVertices[vertexIdx1 as usize].clone();
+                let mut vertex2 = meshVertices[vertexIdx2 as usize].clone();
+
+                // transform vertices
+                vertex0 = mul(&transformationMatrix, &vertex0);
+                vertex1 = mul(&transformationMatrix, &vertex1);
+                vertex2 = mul(&transformationMatrix, &vertex2);
+
+                bvhLeafNodes.push(opengl::BvhLeafNode {
+                    nodeType: 1, // 1 is polygon
+                    materialIdx: 0,
+
+                    vertex0: Vector4::<f64>::new(vertex0.x, vertex0.y, vertex0.z, 1.0),
+                    vertex1: Vector4::<f64>::new(vertex1.x, vertex1.y, vertex1.z, 1.0),
+                    vertex2: Vector4::<f64>::new(vertex2.x, vertex2.y, vertex2.z, 1.0),
+                });
+            }
+
+        }
+
+
+
+
         // add BVH leaf for testing
         bvhLeafNodes.push(opengl::BvhLeafNode {
             nodeType: 2, // 2 is capped cone
@@ -1714,6 +1769,7 @@ pub fn main() {
         });
 
         // back plane
+        /* commented because we don't need backplane
         bvhLeafNodes.push(opengl::BvhLeafNode {
             nodeType: 0, // 0 is sphere
             materialIdx: 0,
@@ -1722,6 +1778,7 @@ pub fn main() {
             vertex1: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
             vertex2: Vector4::<f64>::new(0.0, 0.0, 0.0, 0.0),
         });
+        */
 
         // implicit surface
         bvhLeafNodes.push(opengl::BvhLeafNode {
@@ -3468,10 +3525,3 @@ impl FpsMeasure {
 
 // TODO< remove HasCenter because it is redudant >
 
-
-// TODO< implement Material system -
-// each material is assigned to a primitive
-
-// Materials have a unique id -- which is simply the index to a material array in the shader
-
-// >
