@@ -1706,10 +1706,41 @@ pub fn main() {
 
 
             let mut transformationMatrix = Matrix44::new_nonuniform_scaling(&Vector3::new(2.0, 2.0, 2.0));
-            transformationMatrix = transformationMatrix * Matrix44::from_euler_angles(0.0, (t as f64) * 0.3 , 0.0);
+            transformationMatrix *= Matrix44::from_euler_angles(0.0, (t as f64) * 0.3 , 0.0);
 
 
-            for iMeshVertexIndicesOfPoly in meshVertexIndicesOfPolygons {
+            for iMeshVertexIndicesOfPoly in &meshVertexIndicesOfPolygons {
+                let vertexIdx0 = iMeshVertexIndicesOfPoly[0];
+                let vertexIdx1 = iMeshVertexIndicesOfPoly[1];
+                let vertexIdx2 = iMeshVertexIndicesOfPoly[2];
+
+                let mut vertex0 = meshVertices[vertexIdx0 as usize].clone();
+                let mut vertex1 = meshVertices[vertexIdx1 as usize].clone();
+                let mut vertex2 = meshVertices[vertexIdx2 as usize].clone();
+
+                // transform vertices
+                vertex0 = mul(&transformationMatrix, &vertex0);
+                vertex1 = mul(&transformationMatrix, &vertex1);
+                vertex2 = mul(&transformationMatrix, &vertex2);
+
+                bvhLeafNodes.push(opengl::BvhLeafNode {
+                    nodeType: 1, // 1 is polygon
+                    materialIdx: 0,
+
+                    vertex0: Vector4::<f64>::new(vertex0.x, vertex0.y, vertex0.z, 1.0),
+                    vertex1: Vector4::<f64>::new(vertex1.x, vertex1.y, vertex1.z, 1.0),
+                    vertex2: Vector4::<f64>::new(vertex2.x, vertex2.y, vertex2.z, 1.0),
+                });
+            }
+
+
+
+            transformationMatrix = Matrix44::new_translation(&Vector3::<f64>::new(4.0, 0.0, 0.0));
+            transformationMatrix *= Matrix44::new_nonuniform_scaling(&Vector3::new(3.0, 3.0, 3.0));
+            transformationMatrix *= Matrix44::from_euler_angles(0.0, (t as f64) * 0.1 , 0.0);
+
+
+            for iMeshVertexIndicesOfPoly in &meshVertexIndicesOfPolygons {
                 let vertexIdx0 = iMeshVertexIndicesOfPoly[0];
                 let vertexIdx1 = iMeshVertexIndicesOfPoly[1];
                 let vertexIdx2 = iMeshVertexIndicesOfPoly[2];
