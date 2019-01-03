@@ -431,8 +431,9 @@ float distanceFn0(vec3 p, N descriptor) {
 
     float d0 = sdBox(p - d.vecs[0].xyz, vec3(0.4, 0.2, 0.2));
     
-    float d1 = sdBox(p - d.vecs[2].xyz, vec3(0.8, 0.8, 0.8));
-    
+    //float d1 = sdBox(p - d.vecs[2].xyz, vec3(0.8, 0.8, 0.8));
+    float d1 = udTriangleSingle(d.vecs[2].xyz + vec3(0.8, 0.8, 0.8), d.vecs[2].xyz + vec3(1.3, 0.8, 0.8), d.vecs[2].xyz + vec3(1.0, 0.7, 0.2), p);
+
     float d2 = min(d0, d1); // union
 
     d2 -= 0.2; // add thickness
