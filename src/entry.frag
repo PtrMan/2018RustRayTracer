@@ -299,6 +299,53 @@ float sdBox(vec3 p, vec3 b) {
 
 
 
+
+// It computes the distance to a triangle.
+//
+// See here: http://iquilezles.org/www/articles/triangledistance/triangledistance.htm
+//
+// In case a whole mesh was rendered, only one square root would be needed for the
+// whole mesh.
+//
+// In this example the triangle is given a thckness of 0.01 units (line 42). Like the
+// square root, this thickness should be added only once for the whole mesh too.
+float udTriangleSingle(vec3 v1, vec3 v2, vec3 v3, vec3 p) {
+    // The MIT License
+    // Copyright © 2014 Inigo Quilez
+    // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+    // src https://www.shadertoy.com/view/4sXXRN
+
+    vec3 v21 = v2 - v1; vec3 p1 = p - v1;
+    vec3 v32 = v3 - v2; vec3 p2 = p - v2;
+    vec3 v13 = v1 - v3; vec3 p3 = p - v3;
+    vec3 nor = cross( v21, v13 );
+
+    return 
+        // inside/outside test
+        (sign(dot(cross(v21,nor),p1)) + 
+         sign(dot(cross(v32,nor),p2)) + 
+         sign(dot(cross(v13,nor),p3))<2.0) 
+         ?
+
+         // 3 edges
+         min( min( 
+         dot2(v21*clamp(dot(v21,p1)/dot2(v21),0.0,1.0)-p1), 
+         dot2(v32*clamp(dot(v32,p2)/dot2(v32),0.0,1.0)-p2) ), 
+         dot2(v13*clamp(dot(v13,p3)/dot2(v13),0.0,1.0)-p3) )
+         :
+
+         // 1 face
+         dot(nor,p1)*dot(nor,p1)/dot2(nor);
+}
+
+float udTriangle(vec3 v1, vec3 v2, vec3 v3, vec3 p) {
+    return sqrt(udTriangleSingle(v1, v2, v3, p));
+}
+
+
+
+
 // fast normal computation
 // /param pnn evaluated fn at p+vec2(1.0,-1.0).xyy
 // /param nnp evaluated fn at p+vec2(1.0,-1.0).yyx
